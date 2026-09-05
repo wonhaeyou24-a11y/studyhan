@@ -15,33 +15,34 @@
   }
   .app {
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-    min-height: 100vh; padding: 24px; text-align: center;
+    height: 100vh; height: 100dvh; overflow-y: auto; overflow-x: hidden;
+    padding: clamp(8px, 2vh, 24px) 16px; text-align: center;
   }
+  .app > * { flex-shrink: 0; }
   .progress {
-    font-size: 22px; color: #888; margin-bottom: 8px;
+    font-size: clamp(14px, 2.4vh, 22px); color: #888; margin-bottom: clamp(2px, 0.8vh, 8px);
   }
   .card {
     background: white;
-    border-radius: 40px;
+    border-radius: clamp(20px, 4vh, 40px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-    padding: 32px 40px;
-    margin: 16px 0 8px 0;
+    padding: clamp(8px, 1.8vh, 24px) clamp(18px, 4vw, 40px);
+    margin: clamp(2px, 1vh, 10px) 0 clamp(2px, 0.6vh, 6px) 0;
     min-width: 260px;
     max-width: min(92vw, 640px);
   }
   .char {
-    font-size: 180px;
     font-weight: 900;
     color: #3a3a3a;
-    line-height: 1.3;
+    line-height: 1.2;
     word-break: keep-all;
     white-space: normal;
   }
   .trace-wrap {
     position: relative;
-    width: min(90vw, 320px);
-    height: min(90vw, 320px);
-    margin: 16px 0 32px 0;
+    width: min(78vw, 32vh, 260px);
+    height: min(78vw, 32vh, 260px);
+    margin: clamp(4px, 1.2vh, 12px) 0 clamp(6px, 1.6vh, 20px) 0;
     border: 3px dashed #cfd8dc;
     border-radius: 28px;
     background: white;
@@ -50,28 +51,32 @@
   .trace-guide {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 260px; font-weight: 900;
+    font-weight: 900; white-space: nowrap;
     color: rgba(0,0,0,0.18);
     pointer-events: none;
   }
   #inkCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   .trace-buttons-row {
-    display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
-    margin-bottom: 20px;
+    display: flex; gap: clamp(8px, 2vw, 20px); flex-wrap: wrap; justify-content: center;
+    margin-bottom: clamp(4px, 1vh, 12px);
   }
-  .btn-clear { background: #f4f4f4; color: #666; font-size: 22px; padding: 16px 28px; }
-  .btn-submit { background: #ff9f1c; color: #4a2b00; font-size: 26px; padding: 20px 36px; }
+  .btn-clear { background: #f4f4f4; color: #666; font-size: clamp(13px, 2.2vh, 20px); padding: clamp(6px, 1.4vh, 14px) clamp(14px, 3vw, 26px); }
+  .btn-submit { background: #ff9f1c; color: #4a2b00; font-size: clamp(14px, 2.4vh, 24px); padding: clamp(8px, 1.8vh, 18px) clamp(18px, 4vw, 34px); }
 
   .top-bar {
-    display: flex; align-items: center; justify-content: center; gap: 24px;
-    flex-wrap: wrap; margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between; gap: clamp(6px, 2vw, 24px);
+    flex-wrap: nowrap; width: 100%; max-width: 640px;
+    margin-bottom: clamp(4px, 1.2vh, 12px);
   }
+  .back-btn { flex-shrink: 0; }
+  .growth-badge { flex-shrink: 0; }
   .sticker-board {
-    display: flex; gap: 8px; background: white; border-radius: 20px;
-    padding: 8px 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: flex; gap: 6px; background: white; border-radius: 20px;
+    padding: 6px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow-x: auto; min-width: 0; max-width: 34vw;
   }
   .sticker-slot {
-    width: 44px; height: 44px; border-radius: 50%;
+    width: clamp(26px, 5vh, 44px); height: clamp(26px, 5vh, 44px); border-radius: 50%;
     border: 2px dashed #dcdcdc;
     display: flex; align-items: center; justify-content: center;
     overflow: hidden; background: #fafafa;
@@ -82,8 +87,8 @@
     border-radius: 20px; padding: 6px 14px 6px 6px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   }
-  .growth-badge img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; object-position: top; }
-  .growth-badge span { font-size: 15px; font-weight: bold; color: #666; }
+  .growth-badge img { width: clamp(24px, 4.5vh, 36px); height: clamp(24px, 4.5vh, 36px); border-radius: 50%; object-fit: cover; object-position: top; }
+  .growth-badge span { font-size: clamp(12px, 2vh, 15px); font-weight: bold; color: #666; }
 
   .levelup-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.45);
@@ -98,17 +103,17 @@
   .levelup-title { font-size: 30px; font-weight: 900; color: #e08a00; margin-bottom: 6px; }
   .levelup-sub { font-size: 20px; color: #777; margin-bottom: 18px; }
   .buttons-row {
-    display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;
-    margin-bottom: 24px;
+    display: flex; gap: clamp(10px, 3vw, 24px); flex-wrap: wrap; justify-content: center;
+    margin-bottom: clamp(4px, 1.2vh, 14px);
   }
   button {
-    font-size: 32px;
+    font-size: clamp(15px, 2.8vh, 28px);
     font-weight: bold;
-    padding: 28px 44px;
-    border-radius: 32px;
+    padding: clamp(8px, 1.8vh, 22px) clamp(18px, 5vw, 40px);
+    border-radius: clamp(16px, 3vh, 32px);
     border: none;
     cursor: pointer;
-    min-width: 180px;
+    min-width: clamp(100px, 25vw, 180px);
     box-shadow: 0 6px 0 rgba(0,0,0,0.15);
     transition: transform 0.08s;
     touch-action: manipulation;
@@ -117,17 +122,17 @@
   .btn-listen { background: #ffd166; color: #5a3d00; }
   .btn-speak { background: #06d6a0; color: #003d2e; }
   .btn-speak.recording { background: #ef476f; color: white; }
-  .btn-next { background: #118ab2; color: white; font-size: 26px; padding: 18px 36px; }
-  .btn-dev { background: #eee; color: #555; font-size: 18px; padding: 12px 20px; border-radius: 16px; box-shadow: none; min-width: auto; }
-  .dev-row { display: flex; gap: 12px; margin-top: 28px; }
+  .btn-next { background: #118ab2; color: white; font-size: clamp(15px, 2.8vh, 26px); padding: clamp(10px, 2vh, 18px) clamp(18px, 4vw, 36px); }
+  .btn-dev { background: #eee; color: #555; font-size: clamp(13px, 2vh, 18px); padding: clamp(8px, 1.4vh, 12px) clamp(12px, 3vw, 20px); border-radius: 16px; box-shadow: none; min-width: auto; }
+  .dev-row { display: flex; gap: 12px; margin-top: clamp(8px, 2vh, 28px); }
   .platform-note {
     background: #eef7ff; border: 2px solid #bfe3ff; color: #2b6ca3;
-    border-radius: 20px; padding: 14px 20px; font-size: 17px;
-    max-width: 480px; margin-bottom: 12px;
+    border-radius: 20px; padding: clamp(8px, 1.6vh, 14px) clamp(12px, 3vw, 20px); font-size: clamp(12px, 2vh, 17px);
+    max-width: 480px; margin-bottom: clamp(4px, 1.2vh, 12px);
   }
 
   .status {
-    font-size: 26px; min-height: 40px; margin-bottom: 12px; color: #555;
+    font-size: clamp(14px, 2.8vh, 26px); min-height: clamp(20px, 3.6vh, 40px); margin-bottom: clamp(4px, 1.2vh, 12px); color: #555;
   }
 
   .reaction-overlay {
@@ -146,21 +151,21 @@
   .reaction-text.correct { color: #06a06a; }
   .reaction-text.retry { color: #e08a00; }
 
-  .mic-hint { font-size: 18px; color: #999; margin-top: -8px; margin-bottom: 16px; max-width: 480px; }
+  .mic-hint { font-size: clamp(12px, 2vh, 18px); color: #999; margin-top: 0; margin-bottom: clamp(6px, 1.6vh, 16px); max-width: 480px; }
 
   .mic-indicator {
     display: none;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: clamp(6px, 1.6vh, 16px);
   }
   .mic-indicator.show { display: flex; }
   .mic-pulse {
-    width: 70px; height: 70px;
+    width: clamp(44px, 8vh, 70px); height: clamp(44px, 8vh, 70px);
     border-radius: 50%;
     background: #ef476f;
     display: flex; align-items: center; justify-content: center;
-    font-size: 32px;
+    font-size: clamp(20px, 4vh, 32px);
     animation: pulse 1s infinite;
     box-shadow: 0 0 0 rgba(239,71,111,0.5);
   }
@@ -169,36 +174,68 @@
     70% { box-shadow: 0 0 0 24px rgba(239,71,111,0); transform: scale(1.08); }
     100% { box-shadow: 0 0 0 0 rgba(239,71,111,0); transform: scale(1); }
   }
-  .mic-label { font-size: 20px; color: #ef476f; font-weight: bold; margin-top: 8px; }
+  .mic-label { font-size: clamp(14px, 2.4vh, 20px); color: #ef476f; font-weight: bold; margin-top: 8px; }
   .error-box {
     background: #fff3f3; border: 2px solid #ffb3b3; color: #c0392b;
-    border-radius: 20px; padding: 14px 20px; font-size: 18px;
-    margin-bottom: 12px; max-width: 480px; display: none;
+    border-radius: 20px; padding: clamp(8px, 1.6vh, 14px) clamp(12px, 3vw, 20px); font-size: clamp(13px, 2.2vh, 18px);
+    margin-bottom: clamp(4px, 1.2vh, 12px); max-width: 480px; display: none;
   }
   .error-box.show { display: block; }
 
-  /* ===== 단계 선택 화면 ===== */
+  /* ===== 단계 선택 화면 (카테고리 → 단계 목록, 모두 스크롤 없이 한 화면) ===== */
   .stage-menu {
     display: flex; flex-direction: column; align-items: center;
-    padding: 40px 24px; min-height: 100vh;
+    padding: clamp(16px, 4vh, 40px) 24px;
+    height: 100vh; height: 100dvh; overflow: hidden;
     background: linear-gradient(180deg, #fff8e6 0%, #eaf6ff 100%);
   }
-  .stage-menu h1 { font-size: 32px; color: #444; margin-bottom: 28px; }
-  .stage-list { display: flex; flex-direction: column; gap: 16px; width: min(90vw, 420px); }
+  .menu-header {
+    flex: 0 0 auto; position: relative; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: clamp(12px, 3vh, 28px);
+  }
+  .menu-header h1 { font-size: clamp(20px, 4.5vw, 32px); color: #444; margin: 0; }
+  .menu-back-btn {
+    position: absolute; left: 0; background: #f0f0f0; color: #666; font-size: 20px;
+    padding: 10px 18px; border-radius: 16px; box-shadow: none; min-width: auto; display: none;
+  }
+  .menu-back-btn.show { display: inline-block; }
+
+  /* 카테고리 선택 (한글/영어/일어학습) */
+  .category-grid {
+    flex: 1; min-height: 0; display: flex; gap: 16px;
+    width: min(94vw, 720px); margin: 0 auto;
+  }
+  .category-card {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: clamp(6px, 1.5vh, 12px); background: white; border-radius: 28px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: none; cursor: pointer; padding: 12px;
+  }
+  .category-card .emoji {
+    font-size: clamp(28px, 7vw, 44px); font-weight: 900; color: white;
+    width: clamp(56px, 14vw, 88px); height: clamp(56px, 14vw, 88px); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #06d6a0, #118ab2);
+  }
+  .category-card:nth-child(2) .emoji { background: linear-gradient(135deg, #ff9f1c, #ef476f); }
+  .category-card:nth-child(3) .emoji { background: linear-gradient(135deg, #a06cd5, #5e60ce); }
+  .category-card .title { font-size: clamp(16px, 3.4vw, 24px); font-weight: bold; color: #333; }
+  .category-card .count { font-size: clamp(11px, 2vw, 14px); color: #999; }
+
+  /* 카테고리 안의 단계 목록 */
+  .stage-list-screen {
+    flex: 1; min-height: 0; display: flex; flex-direction: column;
+    gap: clamp(8px, 1.6vh, 16px); width: min(92vw, 460px); margin: 0 auto;
+  }
   .stage-btn {
-    background: white; border-radius: 24px; padding: 22px 28px;
+    flex: 1; min-height: 0; background: white; border-radius: 20px; padding: 8px 24px;
     box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-    text-align: left; font-size: 24px; font-weight: bold; color: #333;
+    text-align: left; font-size: clamp(14px, 3.4vh, 24px); font-weight: bold; color: #333;
     border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
   }
-  .stage-btn .badge { font-size: 15px; color: #999; font-weight: normal; }
-  .category-heading {
-    font-size: 18px; font-weight: bold; color: #888;
-    margin: 18px 0 4px 4px; align-self: flex-start;
-  }
-  .category-heading:first-child { margin-top: 0; }
+  .stage-btn .badge { font-size: clamp(11px, 1.8vh, 15px); color: #999; font-weight: normal; }
   .back-btn {
-    background: #f0f0f0; color: #666; font-size: 18px; padding: 10px 20px;
+    background: #f0f0f0; color: #666; font-size: clamp(12px, 2vh, 18px); padding: clamp(6px, 1.4vh, 10px) clamp(10px, 3vw, 20px);
     border-radius: 16px; box-shadow: none; min-width: auto;
   }
   .item-emoji {
@@ -214,8 +251,11 @@
 </head>
 <body>
 <div class="stage-menu" id="stageMenu">
-  <h1>📚 한글공부 시작하기</h1>
-  <div class="stage-list" id="stageList"></div>
+  <div class="menu-header">
+    <button class="menu-back-btn" id="btnMenuBack">◀</button>
+    <h1 id="menuTitle">📚 한글공부 시작하기</h1>
+  </div>
+  <div id="stageList"></div>
 </div>
 
 <div class="app" id="learnScreen" style="display:none;">
@@ -253,7 +293,7 @@
   </div>
   <div class="mic-hint" id="micHint"></div>
 
-  <div class="mic-hint">🔌 음성으로 발음을 인식하는 기능은 2차 개발에서 추가할 예정이에요. 지금은 따라쓰기/읽기 확인으로 정답 여부를 확인합니다.</div>
+  <div class="mic-hint">🔌 음성 인식 기능은 2차 개발에서 추가돼요</div>
 </div>
 
 <div class="reaction-overlay" id="reactionOverlay">
@@ -278,19 +318,19 @@
 const STAGES = [
   // ---- 국어 ----
   {
-    id: 'consonants', label: '자음', category: '국어', type: 'trace', lang: 'ko-KR',
+    id: 'consonants', label: '자음', group: 'ko', type: 'trace', lang: 'ko-KR',
     items: ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'].map(c => ({ char: c, accepts: [c] }))
   },
   {
-    id: 'vowels', lang: 'ko-KR', label: '모음', category: '국어', type: 'trace',
+    id: 'vowels', lang: 'ko-KR', label: '모음', group: 'ko', type: 'trace',
     items: ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'].map(c => ({ char: c, accepts: [c] }))
   },
   {
-    id: 'ganada', lang: 'ko-KR', label: '가나다', category: '국어', type: 'trace',
+    id: 'ganada', lang: 'ko-KR', label: '가나다', group: 'ko', type: 'trace',
     items: ['가','나','다','라','마','바','사','아','자','차','카','타','파','하'].map(c => ({ char: c, accepts: [c] }))
   },
   {
-    id: 'words', lang: 'ko-KR', label: '단어', category: '국어', type: 'trace', hintMode: true,
+    id: 'words', lang: 'ko-KR', label: '단어', group: 'ko', type: 'trace', hintMode: true,
     items: [
       { char: '사과', emoji: '🍎' }, { char: '나비', emoji: '🦋' }, { char: '우산', emoji: '☂️' }, { char: '모자', emoji: '🎩' },
       { char: '여우', emoji: '🦊' }, { char: '거북이', emoji: '🐢' }, { char: '토끼', emoji: '🐰' }, { char: '강아지', emoji: '🐶' },
@@ -326,7 +366,7 @@ const STAGES = [
     ].map(o => ({ ...o, accepts: [o.char] }))
   },
   {
-    id: 'sentence1', lang: 'ko-KR', label: '문장 (1단계 - 짧은 문장)', category: '국어', type: 'read',
+    id: 'sentence1', lang: 'ko-KR', label: '문장 1단계 (짧은)', group: 'ko', type: 'read',
     items: [
       '나는 웃어요.', '나는 놀아요.', '이것은 사과예요.', '나는 밥을 먹어요.', '나는 물을 마셔요.',
       '하늘이 파래요.', '꽃이 예뻐요.', '나는 잠을 자요.', '강아지가 짖어요.', '고양이가 울어요.',
@@ -335,7 +375,7 @@ const STAGES = [
     ].map(c => ({ char: c, accepts: [c] }))
   },
   {
-    id: 'sentence2', lang: 'ko-KR', label: '문장 (2단계 - 조금 긴 문장)', category: '국어', type: 'read',
+    id: 'sentence2', lang: 'ko-KR', label: '문장 2단계 (중간)', group: 'ko', type: 'read',
     items: [
       '나는 사과를 먹어요.', '토끼가 깡충깡충 뛰어요.', '오늘은 날씨가 좋아요.', '나는 친구와 인사해요.', '강아지가 꼬리를 흔들어요.',
       '나는 그림을 그려요.', '우리는 공을 던져요.', '엄마가 저녁을 만들어요.', '아빠가 신문을 읽어요.', '나는 자전거를 타요.',
@@ -344,7 +384,7 @@ const STAGES = [
     ].map(c => ({ char: c, accepts: [c] }))
   },
   {
-    id: 'sentence3', lang: 'ko-KR', label: '문장 (3단계 - 긴 문장)', category: '국어', type: 'read',
+    id: 'sentence3', lang: 'ko-KR', label: '문장 3단계 (긴)', group: 'ko', type: 'read',
     items: [
       '나는 친구와 공원에서 놀았어요.', '거북이는 느리지만 꾸준히 걸어가요.', '오늘 아침에 나비를 보았어요.', '나는 학교가 끝난 후에 집으로 갔어요.', '우리 가족은 주말에 바다로 여행을 갔어요.',
       '토끼는 당근을 아주 좋아해요.', '나는 비가 오는 날에 우산을 써요.', '할머니는 나에게 재미있는 이야기를 해주셨어요.', '나는 동생과 함께 블록을 쌓았어요.', '강아지는 공을 물고 나에게 달려왔어요.',
@@ -354,15 +394,15 @@ const STAGES = [
   },
   // ---- 외국어 ----
   {
-    id: 'en-upper', lang: 'en-US', label: '영어 알파벳 (대문자)', category: '외국어', type: 'trace',
+    id: 'en-upper', lang: 'en-US', label: '알파벳 (대문자)', group: 'en', type: 'trace',
     items: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c => ({ char: c, accepts: [c, c.toLowerCase()] }))
   },
   {
-    id: 'en-lower', lang: 'en-US', label: '영어 알파벳 (소문자)', category: '외국어', type: 'trace',
+    id: 'en-lower', lang: 'en-US', label: '알파벳 (소문자)', group: 'en', type: 'trace',
     items: 'abcdefghijklmnopqrstuvwxyz'.split('').map(c => ({ char: c, accepts: [c, c.toUpperCase()] }))
   },
   {
-    id: 'en-words', lang: 'en-US', label: '영어 단어', category: '외국어', type: 'trace',
+    id: 'en-words', lang: 'en-US', label: '영어 단어', group: 'en', type: 'trace',
     items: [
       { char: 'apple', emoji: '🍎' }, { char: 'cat', emoji: '🐱' }, { char: 'dog', emoji: '🐶' }, { char: 'sun', emoji: '☀️' },
       { char: 'book', emoji: '📖' }, { char: 'fish', emoji: '🐟' }, { char: 'ball', emoji: '⚽' }, { char: 'house', emoji: '🏠' },
@@ -395,14 +435,14 @@ const STAGES = [
     ].map(o => ({ ...o, accepts: [o.char, o.char.toUpperCase()] }))
   },
   {
-    id: 'ja-hiragana', lang: 'ja-JP', label: '일본어 히라가나', category: '외국어', type: 'trace',
+    id: 'ja-hiragana', lang: 'ja-JP', label: '히라가나', group: 'ja', type: 'trace',
     items: ['あ','い','う','え','お','か','き','く','け','こ','さ','し','す','せ','そ',
             'た','ち','つ','て','と','な','に','ぬ','ね','の','は','ひ','ふ','へ','ほ',
             'ま','み','む','め','も','や','ゆ','よ','ら','り','る','れ','ろ','わ','を','ん']
       .map(c => ({ char: c, accepts: [c] }))
   },
   {
-    id: 'ja-words', lang: 'ja-JP', label: '일본어 단어', category: '외국어', type: 'trace',
+    id: 'ja-words', lang: 'ja-JP', label: '일본어 단어', group: 'ja', type: 'trace',
     items: [
       { char: 'りんご', emoji: '🍎' }, { char: 'ねこ', emoji: '🐱' }, { char: 'いぬ', emoji: '🐶' }, { char: 'ほん', emoji: '📖' },
       { char: 'さかな', emoji: '🐟' }, { char: 'いえ', emoji: '🏠' }, { char: 'ばなな', emoji: '🍌' }, { char: 'ぶどう', emoji: '🍇' },
@@ -459,19 +499,47 @@ const stageList = document.getElementById('stageList');
 const learnScreen = document.getElementById('learnScreen');
 const btnBackToMenu = document.getElementById('btnBackToMenu');
 const btnHint = document.getElementById('btnHint');
+const menuTitle = document.getElementById('menuTitle');
+const btnMenuBack = document.getElementById('btnMenuBack');
 
-// ===== 단계 선택 화면 =====
-function renderStageMenu() {
+// ===== 단계 선택 화면 (카테고리 → 단계 목록, 2단계 네비게이션) =====
+const GROUPS = [
+  { id: 'ko', emoji: '가', title: '한글학습' },
+  { id: 'en', emoji: 'A', title: '영어학습' },
+  { id: 'ja', emoji: 'あ', title: '일어학습' },
+];
+let currentGroup = null; // null = 카테고리 화면, 아니면 해당 그룹의 단계 목록 화면
+
+function renderMenu() {
+  if (currentGroup === null) {
+    renderCategoryScreen();
+  } else {
+    renderStageListScreen(currentGroup);
+  }
+}
+
+function renderCategoryScreen() {
+  menuTitle.textContent = '📚 한글공부 시작하기';
+  btnMenuBack.classList.remove('show');
+  stageList.className = 'category-grid';
   stageList.innerHTML = '';
-  let lastCategory = null;
-  STAGES.forEach((stage) => {
-    if (stage.category !== lastCategory) {
-      lastCategory = stage.category;
-      const heading = document.createElement('div');
-      heading.className = 'category-heading';
-      heading.textContent = stage.category === '외국어' ? '🌍 외국어편' : '🇰🇷 국어편';
-      stageList.appendChild(heading);
-    }
+  GROUPS.forEach((group) => {
+    const count = STAGES.filter((s) => s.group === group.id).length;
+    const card = document.createElement('button');
+    card.className = 'category-card';
+    card.innerHTML = `<span class="emoji">${group.emoji}</span><span class="title">${group.title}</span><span class="count">${count}개 코스</span>`;
+    card.addEventListener('click', () => { currentGroup = group.id; renderMenu(); });
+    stageList.appendChild(card);
+  });
+}
+
+function renderStageListScreen(groupId) {
+  const group = GROUPS.find((g) => g.id === groupId);
+  menuTitle.textContent = `${group.emoji} ${group.title}`;
+  btnMenuBack.classList.add('show');
+  stageList.className = 'stage-list-screen';
+  stageList.innerHTML = '';
+  STAGES.filter((s) => s.group === groupId).forEach((stage) => {
     const btn = document.createElement('button');
     btn.className = 'stage-btn';
     btn.innerHTML = `<span>${stage.label}</span><span class="badge">${stage.items.length}개</span>`;
@@ -479,11 +547,27 @@ function renderStageMenu() {
     stageList.appendChild(btn);
   });
 }
-renderStageMenu();
+
+btnMenuBack.addEventListener('click', () => {
+  currentGroup = null;
+  renderMenu();
+});
+
+renderMenu();
+
+// 단계에 저장된 전체 항목이 많아도(예: 단어 122개) 한 판은 ROUND_SIZE개로 제한해서
+// 스티커판/화면이 한 번에 다 보이게 함. 항목이 적으면(ROUND_SIZE 이하) 그대로 다 사용.
+const ROUND_SIZE = 5;
+function pickRoundItems(stage) {
+  const items = stage.items;
+  if (items.length <= ROUND_SIZE) return items;
+  const shuffled = [...items].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, ROUND_SIZE);
+}
 
 function startStage(stage) {
   currentStage = stage;
-  currentQueue = stage.items;
+  currentQueue = pickRoundItems(stage);
   mode = 'normal';
   reviewMap = new Map();
   idx = 0;
@@ -505,6 +589,7 @@ function startStage(stage) {
 btnBackToMenu.addEventListener('click', () => {
   learnScreen.style.display = 'none';
   stageMenu.style.display = 'flex';
+  renderMenu();
 });
 
 function showError(msg) {
@@ -580,7 +665,7 @@ function drawGuideMask(char) {
   guideMaskCtx.fillStyle = '#000000';
   guideMaskCtx.textAlign = 'center';
   guideMaskCtx.textBaseline = 'middle';
-  const fontSize = traceFontSizeFor(char);
+  const fontSize = traceCanvasFontSizeFor(char);
   guideMaskCtx.font = `900 ${fontSize}px -apple-system, sans-serif`;
   guideMaskCtx.fillText(char, CANVAS_SIZE / 2, CANVAS_SIZE / 2 + 6);
 }
@@ -670,22 +755,36 @@ btnReadDone.addEventListener('click', () => {
   showReaction(true);
 });
 
-// 글자 길이에 따라 적당한 폰트 크기를 계산 (한글 음절/영단어/일본어 단어 모두 대응)
-function traceFontSizeFor(text) {
-  const n = text.length;
-  if (n <= 1) return 260;
-  if (n === 2) return 150;
-  if (n === 3) return 110;
-  if (n === 4) return 90;
-  return Math.max(50, 90 - (n - 4) * 8);
+// 화면 높이가 작을 때(작은 폰) 글자 크기를 함께 줄여서 한 화면 안에 다 들어오게 함
+function vhScale() {
+  return Math.max(0.45, Math.min(1, window.innerHeight / 800));
 }
+// 글자 길이 + 박스 크기에 맞춰 한 줄로 딱 들어오는 폰트 크기 계산 (박스 밖으로 넘치는 것 방지)
+function fitFontSizeFor(text, box) {
+  const n = Math.max(text.length, 1);
+  if (n === 1) return Math.round(box * 0.82);
+  return Math.round(Math.max(box / n * 0.92, 18));
+}
+// 화면에 실제 보이는 따라쓰기 박스(뷰포트에 따라 커졌다 작아졌다 함) 기준 - DOM 글자용
+function traceFontSizeFor(text) {
+  const box = (traceWrap && traceWrap.getBoundingClientRect().width) || 260;
+  return fitFontSizeFor(text, box);
+}
+// 캔버스는 항상 내부 해상도가 CANVAS_SIZE로 고정이라(화면에는 CSS로 늘리거나 줄여서 표시),
+// 캔버스에 글자를 그릴 때는 화면 표시 크기가 아니라 CANVAS_SIZE를 기준으로 계산해야 함
+function traceCanvasFontSizeFor(text) {
+  return fitFontSizeFor(text, CANVAS_SIZE);
+}
+// 카드 속 글자 미리보기는 아래 따라쓰기 박스에 이미 큰 가이드 글자가 있어서
+// 굳이 크게 중복 표시할 필요가 없어 절반 정도 크기로 표시 (화면 공간 절약)
 function cardFontSizeFor(text) {
   const n = text.length;
-  if (n <= 1) return 180;
-  if (n === 2) return 120;
-  if (n === 3) return 95;
-  if (n === 4) return 78;
-  return Math.max(42, 78 - (n - 4) * 7);
+  const s = vhScale();
+  if (n <= 1) return Math.round(100 * s);
+  if (n === 2) return Math.round(70 * s);
+  if (n === 3) return Math.round(56 * s);
+  if (n === 4) return Math.round(46 * s);
+  return Math.round(Math.max(26, 46 - (n - 4) * 4) * s);
 }
 
 function renderItem() {
@@ -859,7 +958,7 @@ function goToNextItem() {
       reviewMap = new Map(); // 이번 복습 판에서 새로 틀리는 것들을 다시 기록하기 위해 초기화
       mode = 'review';
     } else {
-      currentQueue = currentStage.items;
+      currentQueue = pickRoundItems(currentStage);
       mode = 'normal';
     }
     roundStickers = new Array(currentQueue.length).fill(null); // 새 판 시작 시 스티커판 초기화
