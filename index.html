@@ -25,14 +25,14 @@
   .practice-row {
     display: flex; flex-direction: row; flex-wrap: wrap;
     align-items: center; justify-content: center;
-    gap: clamp(10px, 3vw, 24px); width: 100%;
-    margin: clamp(2px, 1vh, 10px) 0 clamp(4px, 1.2vh, 12px) 0;
+    gap: clamp(10px, 3vw, 40px); width: 100%;
+    margin: clamp(2px, 1vh, 14px) 0 clamp(4px, 1.2vh, 16px) 0;
   }
   .card {
     background: white;
     border-radius: clamp(20px, 4vh, 40px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-    padding: clamp(8px, 1.8vh, 24px) clamp(18px, 4vw, 40px);
+    padding: clamp(8px, 1.8vh, 36px) clamp(18px, 4vw, 56px);
     margin: 0;
     min-width: 140px;
     max-width: min(92vw, 640px);
@@ -46,8 +46,8 @@
   }
   .trace-wrap {
     position: relative;
-    width: min(78vw, 32vh, 260px);
-    height: min(78vw, 32vh, 260px);
+    width: min(78vw, 33vh, 400px);
+    height: min(78vw, 33vh, 400px);
     margin: 0;
     border: 3px dashed #cfd8dc;
     border-radius: 28px;
@@ -117,9 +117,9 @@
     margin-bottom: clamp(4px, 1.2vh, 14px);
   }
   button {
-    font-size: clamp(15px, 2.8vh, 28px);
+    font-size: clamp(15px, 2.8vh, 32px);
     font-weight: bold;
-    padding: clamp(8px, 1.8vh, 22px) clamp(18px, 5vw, 40px);
+    padding: clamp(8px, 1.8vh, 26px) clamp(18px, 5vw, 44px);
     border-radius: clamp(16px, 3vh, 32px);
     border: none;
     cursor: pointer;
@@ -775,9 +775,12 @@ btnReadDone.addEventListener('click', () => {
   showReaction(true);
 });
 
-// 화면 높이가 작을 때(작은 폰) 글자 크기를 함께 줄여서 한 화면 안에 다 들어오게 함
+// 화면이 작을 때(작은 폰)는 글자 크기를 줄이고, 화면이 넉넉할 때(데스크톱/태블릿)는
+// 오히려 키워서 남는 공간을 활용함. 가로/세로 중 더 작은 쪽을 기준으로 계산해서
+// 화면 비율이 이상해도(가로로 아주 넓고 낮은 창 등) 안전하게 동작하게 함
 function vhScale() {
-  return Math.max(0.45, Math.min(1, window.innerHeight / 800));
+  const dim = Math.min(window.innerWidth, window.innerHeight);
+  return Math.max(0.45, Math.min(1.35, dim / 800));
 }
 // 글자 길이 + 박스 크기에 맞춰 한 줄로 딱 들어오는 폰트 크기 계산 (박스 밖으로 넘치는 것 방지)
 function fitFontSizeFor(text, box) {
@@ -839,8 +842,52 @@ const STROKE_ORDER = {
   'ㅣ': [[[50,15],[50,85]]],
 };
 
+// ㄱㄴㄷ... 조합형 한글 음절(가,나,다...)은 초성+중성 획을 각자 영역으로
+// 축소/이동해서 합쳐줌 (받침 있는 글자나 겹모음은 아직 지원 안 함)
+const HANGUL_INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const HANGUL_MEDIALS = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const VERTICAL_VOWELS = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅣ']; // 초성 왼쪽 / 중성 오른쪽
+const HORIZONTAL_VOWELS = ['ㅗ','ㅛ','ㅜ','ㅠ','ㅡ']; // 초성 위 / 중성 아래
+
+// stroke 좌표(0~100 기준)를 새 영역(x0~x1, y0~y1) 안에 맞게 축소·이동
+function remapStrokes(strokes, x0, x1, y0, y1) {
+  const mapX = (v) => x0 + (v / 100) * (x1 - x0);
+  const mapY = (v) => y0 + (v / 100) * (y1 - y0);
+  return strokes.map((stroke) => {
+    if (stroke.circle) {
+      const [cx, cy, r] = stroke.circle;
+      const rx = (r / 100) * (x1 - x0);
+      const ry = (r / 100) * (y1 - y0);
+      return { circle: [mapX(cx), mapY(cy), Math.min(rx, ry)] };
+    }
+    return stroke.map((p) => [mapX(p[0]), mapY(p[1])]);
+  });
+}
+
+function composeSyllableStrokes(char) {
+  const code = char.charCodeAt(0) - 0xac00;
+  if (code < 0 || code > 11171) return null;
+  const finalIdx = code % 28;
+  if (finalIdx !== 0) return null; // 받침 있는 글자는 아직 지원 안 함
+  const initial = HANGUL_INITIALS[Math.floor(code / 588)];
+  const medial = HANGUL_MEDIALS[Math.floor((code % 588) / 28)];
+  const initialStrokes = STROKE_ORDER[initial];
+  const medialStrokes = STROKE_ORDER[medial];
+  if (!initialStrokes || !medialStrokes) return null;
+  if (VERTICAL_VOWELS.includes(medial)) {
+    return [...remapStrokes(initialStrokes, 0, 46, 8, 92), ...remapStrokes(medialStrokes, 54, 100, 8, 92)];
+  }
+  if (HORIZONTAL_VOWELS.includes(medial)) {
+    return [...remapStrokes(initialStrokes, 8, 92, 0, 46), ...remapStrokes(medialStrokes, 8, 92, 54, 100)];
+  }
+  return null; // 복합모음(ㅘㅢ 등)은 아직 지원 안 함
+}
+
 function renderStrokeOrder(char) {
-  const strokes = STROKE_ORDER[char];
+  let strokes = STROKE_ORDER[char];
+  if (!strokes && char.length === 1) {
+    strokes = composeSyllableStrokes(char);
+  }
   // 기존에 그렸던 획 요소만 제거 (defs는 남김)
   strokeOrderSvg.querySelectorAll('.stroke-group').forEach((el) => el.remove());
   if (!strokes) return;
