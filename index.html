@@ -22,13 +22,19 @@
   .progress {
     font-size: clamp(14px, 2.4vh, 22px); color: #888; margin-bottom: clamp(2px, 0.8vh, 8px);
   }
+  .practice-row {
+    display: flex; flex-direction: row; flex-wrap: wrap;
+    align-items: center; justify-content: center;
+    gap: clamp(10px, 3vw, 24px); width: 100%;
+    margin: clamp(2px, 1vh, 10px) 0 clamp(4px, 1.2vh, 12px) 0;
+  }
   .card {
     background: white;
     border-radius: clamp(20px, 4vh, 40px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.12);
     padding: clamp(8px, 1.8vh, 24px) clamp(18px, 4vw, 40px);
-    margin: clamp(2px, 1vh, 10px) 0 clamp(2px, 0.6vh, 6px) 0;
-    min-width: 260px;
+    margin: 0;
+    min-width: 140px;
     max-width: min(92vw, 640px);
   }
   .char {
@@ -42,7 +48,7 @@
     position: relative;
     width: min(78vw, 32vh, 260px);
     height: min(78vw, 32vh, 260px);
-    margin: clamp(4px, 1.2vh, 12px) 0 clamp(6px, 1.6vh, 20px) 0;
+    margin: 0;
     border: 3px dashed #cfd8dc;
     border-radius: 28px;
     background: white;
@@ -56,6 +62,10 @@
     pointer-events: none;
   }
   #inkCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .stroke-order-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .stroke-order-svg .stroke-path { fill: none; stroke: #4fa8e8; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 5 4; opacity: 0.85; }
+  .stroke-order-svg .stroke-num-bg { fill: #4fa8e8; }
+  .stroke-order-svg .stroke-num-text { fill: white; font-size: 9px; font-weight: 900; text-anchor: middle; dominant-baseline: central; }
   .trace-buttons-row {
     display: flex; gap: clamp(8px, 2vw, 20px); flex-wrap: wrap; justify-content: center;
     margin-bottom: clamp(4px, 1vh, 12px);
@@ -269,15 +279,24 @@
   </div>
 
   <div class="progress" id="progress">1 / 5</div>
-  <div class="card">
-    <button class="btn-hint" id="btnHint">🔍 그림 힌트 보기</button>
-    <div class="item-emoji" id="itemEmoji"></div>
-    <div class="char" id="charDisplay">가</div>
-  </div>
+  <div class="practice-row" id="practiceRow">
+    <div class="card">
+      <button class="btn-hint" id="btnHint">🔍 그림 힌트 보기</button>
+      <div class="item-emoji" id="itemEmoji"></div>
+      <div class="char" id="charDisplay">가</div>
+    </div>
 
-  <div class="trace-wrap" id="traceWrap">
-    <div class="trace-guide" id="traceGuide">가</div>
-    <canvas id="inkCanvas"></canvas>
+    <div class="trace-wrap" id="traceWrap">
+      <div class="trace-guide" id="traceGuide">가</div>
+      <canvas id="inkCanvas"></canvas>
+      <svg id="strokeOrderSvg" class="stroke-order-svg" viewBox="0 0 100 100">
+        <defs>
+          <marker id="strokeArrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#4fa8e8"></path>
+          </marker>
+        </defs>
+      </svg>
+    </div>
   </div>
   <div class="trace-buttons-row" id="traceButtonsRow">
     <button class="btn-clear" id="btnClear">🧹 지우기</button>
@@ -499,6 +518,7 @@ const stageList = document.getElementById('stageList');
 const learnScreen = document.getElementById('learnScreen');
 const btnBackToMenu = document.getElementById('btnBackToMenu');
 const btnHint = document.getElementById('btnHint');
+const strokeOrderSvg = document.getElementById('strokeOrderSvg');
 const menuTitle = document.getElementById('menuTitle');
 const btnMenuBack = document.getElementById('btnMenuBack');
 
@@ -787,6 +807,80 @@ function cardFontSizeFor(text) {
   return Math.round(Math.max(26, 46 - (n - 4) * 4) * s);
 }
 
+// ===== 획순 안내 (자음/모음만 제공) =====
+// 좌표는 0~100 기준 (박스 크기에 맞춰 자동으로 늘어남). 선 획은 [x,y] 점들의 배열,
+// 동그라미 획(ㅇ, ㅎ의 아래 원)은 {circle:[cx,cy,r]}로 표현.
+// 참고: 표준 필순 획수는 확인된 자료를 따랐지만, 세부 좌표는 보기 쉽게 단순화한 것이라
+// 실제 교과서 필순과 약간 다를 수 있어요 (틀린 부분 있으면 알려주시면 바로 고칠게요).
+const STROKE_ORDER = {
+  'ㄱ': [[[25,20],[75,20],[75,80]]],
+  'ㄴ': [[[25,20],[25,80],[75,80]]],
+  'ㄷ': [[[20,20],[80,20]], [[20,20],[20,80],[80,80]]],
+  'ㄹ': [[[20,12],[80,12],[80,45]], [[20,45],[80,45]], [[20,45],[20,85],[80,85]]],
+  'ㅁ': [[[20,20],[80,20]], [[20,20],[20,80],[80,80]], [[80,20],[80,80]]],
+  'ㅂ': [[[25,15],[25,85]], [[25,15],[75,15],[75,85]], [[25,42],[75,42]], [[25,66],[75,66]]],
+  'ㅅ': [[[50,15],[20,85]], [[55,35],[82,85]]],
+  'ㅇ': [{ circle: [50, 50, 35] }],
+  'ㅈ': [[[30,20],[65,20]], [[20,85],[50,35],[80,85]]],
+  'ㅊ': [[[38,8],[52,18]], [[28,28],[70,28]], [[18,88],[50,38],[82,88]]],
+  'ㅋ': [[[25,20],[75,20],[75,80]], [[45,45],[75,45]]],
+  'ㅌ': [[[20,20],[80,20]], [[20,50],[70,50]], [[20,20],[20,80],[80,80]]],
+  'ㅍ': [[[20,20],[80,20]], [[30,20],[30,80]], [[70,20],[70,80]], [[20,80],[80,80]]],
+  'ㅎ': [[[38,8],[52,18]], [[25,30],[75,30]], { circle: [50, 62, 24] }],
+  'ㅏ': [[[35,10],[35,90]], [[35,45],[72,45]]],
+  'ㅑ': [[[35,10],[35,90]], [[35,32],[72,32]], [[35,60],[72,60]]],
+  'ㅓ': [[[30,45],[65,45]], [[65,10],[65,90]]],
+  'ㅕ': [[[30,32],[65,32]], [[30,60],[65,60]], [[65,10],[65,90]]],
+  'ㅗ': [[[15,65],[85,65]], [[50,15],[50,65]]],
+  'ㅛ': [[[15,65],[85,65]], [[35,15],[35,65]], [[65,15],[65,65]]],
+  'ㅜ': [[[50,35],[50,85]], [[15,35],[85,35]]],
+  'ㅠ': [[[35,35],[35,85]], [[65,35],[65,85]], [[15,35],[85,35]]],
+  'ㅡ': [[[15,50],[85,50]]],
+  'ㅣ': [[[50,15],[50,85]]],
+};
+
+function renderStrokeOrder(char) {
+  const strokes = STROKE_ORDER[char];
+  // 기존에 그렸던 획 요소만 제거 (defs는 남김)
+  strokeOrderSvg.querySelectorAll('.stroke-group').forEach((el) => el.remove());
+  if (!strokes) return;
+  strokes.forEach((stroke, i) => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'stroke-group');
+    if (stroke.circle) {
+      const [cx, cy, r] = stroke.circle;
+      const circlePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      // 원을 거의 한 바퀴(340도) 그려서 화살표가 보이도록 함
+      const d = `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - r * 0.34} ${cy - r * 0.94}`;
+      circlePath.setAttribute('d', d);
+      circlePath.setAttribute('class', 'stroke-path');
+      circlePath.setAttribute('marker-end', 'url(#strokeArrow)');
+      g.appendChild(circlePath);
+      addStrokeNumber(g, cx, cy - r, i + 1);
+    } else {
+      const d = stroke.map((p, i2) => `${i2 === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('class', 'stroke-path');
+      path.setAttribute('marker-end', 'url(#strokeArrow)');
+      g.appendChild(path);
+      addStrokeNumber(g, stroke[0][0], stroke[0][1], i + 1);
+    }
+    strokeOrderSvg.appendChild(g);
+  });
+}
+function addStrokeNumber(g, x, y, num) {
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  bg.setAttribute('cx', x); bg.setAttribute('cy', y); bg.setAttribute('r', 6);
+  bg.setAttribute('class', 'stroke-num-bg');
+  const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  label.setAttribute('x', x); label.setAttribute('y', y);
+  label.setAttribute('class', 'stroke-num-text');
+  label.textContent = num;
+  g.appendChild(bg);
+  g.appendChild(label);
+}
+
 function renderItem() {
   const item = currentQueue[idx];
   const text = item.char;
@@ -814,6 +908,7 @@ function renderItem() {
     traceGuide.style.fontSize = traceFontSizeFor(text) + 'px';
     drawGuideMask(text);
     clearInk();
+    renderStrokeOrder(text);
   }
 
   statusText.textContent = mode === 'review'
