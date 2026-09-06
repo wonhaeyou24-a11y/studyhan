@@ -36,6 +36,8 @@
     margin: 0;
     min-width: 140px;
     max-width: min(92vw, 640px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-sizing: border-box;
   }
   .char {
     font-weight: 900;
@@ -64,7 +66,7 @@
   .trace-guide.hidden { display: none; }
   #inkCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   .stroke-order-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .stroke-order-svg .stroke-body { fill: none; stroke: #cfd3d8; stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; }
+  .stroke-order-svg .stroke-body { fill: none; stroke: #cfd3d8; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
   .stroke-order-svg .stroke-path { fill: none; stroke: #4fa8e8; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 3 2.6; }
   .stroke-order-svg .stroke-num-bg { fill: #4fa8e8; }
   .stroke-order-svg .stroke-num-text { fill: white; font-size: 4.6px; font-weight: 900; text-anchor: middle; dominant-baseline: central; }
@@ -601,6 +603,13 @@ function startStage(stage) {
   btnClear.style.display = isTrace ? 'inline-block' : 'none';
   btnSubmit.style.display = isTrace ? 'inline-block' : 'none';
   btnReadDone.style.display = isTrace ? 'none' : 'inline-block';
+  if (!isTrace) {
+    // 문장(읽기) 단계는 따라쓰기 박스가 없어서 카드 크기를 CSS 기본값으로 되돌림
+    document.querySelector('.card').style.width = '';
+    document.querySelector('.card').style.height = '';
+    charDisplay.style.fontSize = '';
+    practiceRow.style.flexDirection = '';
+  }
 
   stageMenu.style.display = 'none';
   learnScreen.style.display = 'flex';
@@ -781,13 +790,6 @@ btnReadDone.addEventListener('click', () => {
   showReaction(true);
 });
 
-// 화면이 작을 때(작은 폰)는 글자 크기를 줄이고, 화면이 넉넉할 때(데스크톱/태블릿)는
-// 오히려 키워서 남는 공간을 활용함. 가로/세로 중 더 작은 쪽을 기준으로 계산해서
-// 화면 비율이 이상해도(가로로 아주 넓고 낮은 창 등) 안전하게 동작하게 함
-function vhScale() {
-  const dim = Math.min(window.innerWidth, window.innerHeight);
-  return Math.max(0.45, Math.min(1.35, dim / 800));
-}
 // 글자 길이 + 박스 크기에 맞춰 한 줄로 딱 들어오는 폰트 크기 계산 (박스 밖으로 넘치는 것 방지)
 function fitFontSizeFor(text, box) {
   const n = Math.max(text.length, 1);
@@ -804,52 +806,55 @@ function traceFontSizeFor(text) {
 function traceCanvasFontSizeFor(text) {
   return fitFontSizeFor(text, CANVAS_SIZE);
 }
-// 카드 속 글자 미리보기는 아래 따라쓰기 박스에 이미 큰 가이드 글자가 있어서
-// 굳이 크게 중복 표시할 필요가 없어 절반 정도 크기로 표시 (화면 공간 절약)
-function cardFontSizeFor(text) {
-  const n = text.length;
-  const s = vhScale();
-  if (n <= 1) return Math.round(100 * s);
-  if (n === 2) return Math.round(70 * s);
-  if (n === 3) return Math.round(56 * s);
-  if (n === 4) return Math.round(46 * s);
-  return Math.round(Math.max(26, 46 - (n - 4) * 4) * s);
-}
-
-// 따라쓰기 박스는 CSS 비율만으로는 넓은 화면(태블릿 등)의 남는 공간을 다 못 써서,
-// "지금 실제로 화면에 얼마나 빈 공간이 남아있는지"를 직접 재서 그만큼 박스를 키움.
-// learnScreen의 높이가 100dvh로 고정돼 있으면 scrollHeight가 항상 그 값 이상으로만
-// 나와서(내용이 더 작아도 clientHeight로 보임) 진짜 필요한 높이를 알 수 없기 때문에,
-// 잠시 높이를 auto로 풀어서 실제 필요한 높이를 잰 다음 되돌림
+// 카드(미리보기)와 따라쓰기 박스를 항상 같은 크기의 정사각형으로 맞추고, 남는
+// 공간을 최대한 채움. learnScreen 높이가 100dvh로 고정돼 있으면 scrollHeight가
+// 항상 그 값 이상으로만 나와서(내용이 더 작아도 clientHeight로 보임) 진짜 필요한
+// 높이를 알 수 없기 때문에, 잠시 높이를 auto로 풀어서 실제 필요한 높이를 잰 다음 되돌림
+let currentBoxSize = 260;
 function sizeTraceBox() {
   if (currentStage?.type !== 'trace' || traceWrap.style.display === 'none') return;
   const cardEl = document.querySelector('.card');
   if (!cardEl) return;
 
   const probeSize = 10;
+  practiceRow.style.flexDirection = 'row'; // 측정 중엔 항상 가로로 둬서 기준값을 일정하게 유지
+  cardEl.style.width = probeSize + 'px';
+  cardEl.style.height = probeSize + 'px';
   traceWrap.style.width = probeSize + 'px';
   traceWrap.style.height = probeSize + 'px';
   const prevHeight = learnScreen.style.height;
   learnScreen.style.height = 'auto';
-  // 박스를 최소로 줄이고 높이 제한도 푼 상태에서 나머지 요소들이 실제로
-  // 필요로 하는 총 높이를 측정
-  const neededHeightWithoutTrace = learnScreen.scrollHeight - probeSize;
+  // 카드+박스를 둘 다 최소로 줄이고 높이 제한도 푼 상태에서, 나머지 요소들이
+  // 실제로 필요로 하는 총 높이를 측정 (이 상태에선 폭이 작아 항상 가로로
+  // 나란히 배치되므로 practice-row 높이는 probeSize와 같음)
+  const baseline = learnScreen.scrollHeight - probeSize;
   learnScreen.style.height = prevHeight;
-  const availH = learnScreen.clientHeight - neededHeightWithoutTrace;
+  const availH = learnScreen.clientHeight - baseline;
 
-  const cardRect = cardEl.getBoundingClientRect();
-  const traceRect = traceWrap.getBoundingClientRect();
-  const sameRow = Math.abs(cardRect.top - traceRect.top) < 5;
+  const gap = parseFloat(getComputedStyle(practiceRow).gap) || 24;
   const sidePadding = parseFloat(getComputedStyle(learnScreen).paddingLeft) * 2;
-  const availW = sameRow
-    ? learnScreen.clientWidth - cardRect.width - 32 - sidePadding
-    : learnScreen.clientWidth - sidePadding;
+  const availWidthTotal = learnScreen.clientWidth - sidePadding;
 
-  const size = Math.max(160, Math.min(availH - 20, availW, 720));
+  // 두 가지 배치를 모두 계산함. 세로 배치는 항상 세로 공간을 거의 다 채우기 때문에
+  // 기본으로 삼고, 가로로 나란히 뒀을 때가 "뚜렷하게" 더 크게 나올 때만(폭이 넉넉한
+  // 화면) 가로 배치로 바꿈 - 그냥 더 큰 쪽만 고르면 가로 배치가 살짝만 더 커도
+  // 세로 여백이 잔뜩 남는 경우가 생겨서(폭에 막혀 높이를 다 못 씀) 이렇게 처리함
+  const sizeSideBySide = Math.min(availH, (availWidthTotal - gap) / 2);
+  const sizeStacked = Math.min((availH - gap) / 2, availWidthTotal);
+  const useSideBySide = sizeSideBySide > sizeStacked * 1.15;
+  const size = Math.max(160, Math.min((useSideBySide ? sizeSideBySide : sizeStacked) - 16, 720));
+  // 계산에 쓴 배치를 그대로 강제함 (flex-wrap에 맡기면 계산한 크기가 두 배치
+  // 중 하나에 우연히 걸쳐 들어맞아서 의도한 배치와 다르게 나올 수 있음)
+  practiceRow.style.flexDirection = useSideBySide ? 'row' : 'column';
+
+  currentBoxSize = size;
+  cardEl.style.width = size + 'px';
+  cardEl.style.height = size + 'px';
   traceWrap.style.width = size + 'px';
   traceWrap.style.height = size + 'px';
   if (currentQueue[idx]) {
     const text = currentQueue[idx].char;
+    charDisplay.style.fontSize = fitFontSizeFor(text, size * 0.62) + 'px';
     traceGuide.style.fontSize = traceFontSizeFor(text) + 'px';
     drawGuideMask(text);
     renderStrokeOrder(text);
@@ -860,23 +865,24 @@ window.addEventListener('resize', sizeTraceBox);
 // ===== 획순 안내 (자음/모음만 제공) =====
 // 좌표는 0~100 기준 (박스 크기에 맞춰 자동으로 늘어남). 선 획은 [x,y] 점들의 배열,
 // 동그라미 획(ㅇ, ㅎ의 아래 원)은 {circle:[cx,cy,r]}로 표현.
-// 참고: 표준 필순 획수는 확인된 자료를 따랐지만, 세부 좌표는 보기 쉽게 단순화한 것이라
-// 실제 교과서 필순과 약간 다를 수 있어요 (틀린 부분 있으면 알려주시면 바로 고칠게요).
+// 참고: ㄱㄴㅇ 등 기본 획은 확실한 필순을 그대로 썼고, ㄹㅂㅅㅈㅊㅋㅌㅍㅎ처럼 복잡한
+// 자음은 한글 학습 자료(hangeulmate.com 획순 가이드)를 참고해서 획을 하나하나
+// 분리해 좌표를 다시 잡았어요. 그래도 실제 교과서와 다르게 느껴지는 부분이 있으면 알려주세요.
 const STROKE_ORDER = {
   'ㄱ': [[[25,20],[75,20],[75,80]]],
   'ㄴ': [[[25,20],[25,80],[75,80]]],
-  'ㄷ': [[[20,20],[80,20]], [[20,20],[20,80],[80,80]]],
-  'ㄹ': [[[20,12],[80,12],[80,45]], [[20,45],[80,45]], [[20,45],[20,85],[80,85]]],
-  'ㅁ': [[[20,20],[80,20]], [[20,20],[20,80],[80,80]], [[80,20],[80,80]]],
-  'ㅂ': [[[25,15],[25,85]], [[25,15],[75,15],[75,85]], [[25,42],[75,42]], [[25,66],[75,66]]],
-  'ㅅ': [[[50,15],[20,85]], [[55,35],[82,85]]],
+  'ㄷ': [[[20,20],[80,20]], [[20,20],[20,80]], [[20,80],[80,80]]],
+  'ㄹ': [[[20,15],[80,15]], [[80,15],[80,45]], [[80,45],[20,45]], [[20,45],[20,80]], [[20,80],[80,80]]],
+  'ㅁ': [[[20,20],[20,80]], [[20,20],[80,20]], [[80,20],[80,80]], [[20,80],[80,80]]],
+  'ㅂ': [[[25,15],[25,85]], [[75,15],[75,85]], [[25,42],[75,42]], [[25,66],[75,66]]],
+  'ㅅ': [[[48,15],[18,85]], [[52,15],[82,85]]],
   'ㅇ': [{ circle: [50, 50, 35] }],
-  'ㅈ': [[[30,20],[65,20]], [[20,85],[50,35],[80,85]]],
-  'ㅊ': [[[38,8],[52,18]], [[28,28],[70,28]], [[18,88],[50,38],[82,88]]],
-  'ㅋ': [[[25,20],[75,20],[75,80]], [[45,45],[75,45]]],
-  'ㅌ': [[[20,20],[80,20]], [[20,50],[70,50]], [[20,20],[20,80],[80,80]]],
-  'ㅍ': [[[20,20],[80,20]], [[30,20],[30,80]], [[70,20],[70,80]], [[20,80],[80,80]]],
-  'ㅎ': [[[38,8],[52,18]], [[25,30],[75,30]], { circle: [50, 62, 24] }],
+  'ㅈ': [[[32,18],[62,18]], [[48,32],[20,85]], [[52,32],[82,85]]],
+  'ㅊ': [[[42,5],[54,15]], [[30,26],[68,26]], [[48,38],[18,88]], [[52,38],[82,88]]],
+  'ㅋ': [[[25,20],[75,20]], [[75,20],[75,80]], [[45,45],[75,45]]],
+  'ㅌ': [[[20,15],[80,15]], [[20,15],[20,85]], [[20,50],[65,50]], [[20,85],[80,85]]],
+  'ㅍ': [[[20,15],[20,85]], [[20,15],[80,15]], [[80,15],[80,85]], [[20,68],[80,68]]],
+  'ㅎ': [[[40,6],[54,15]], [[25,26],[75,26]], { circle: [50, 60, 26] }],
   'ㅏ': [[[35,10],[35,90]], [[35,45],[72,45]]],
   'ㅑ': [[[35,10],[35,90]], [[35,32],[72,32]], [[35,60],[72,60]]],
   'ㅓ': [[[30,45],[65,45]], [[65,10],[65,90]]],
@@ -993,7 +999,7 @@ function renderItem() {
   const item = currentQueue[idx];
   const text = item.char;
   charDisplay.textContent = text;
-  charDisplay.style.fontSize = currentStage.type === 'read' ? '38px' : cardFontSizeFor(text) + 'px';
+  charDisplay.style.fontSize = currentStage.type === 'read' ? '38px' : fitFontSizeFor(text, currentBoxSize * 0.62) + 'px';
 
   if (item.emoji) {
     itemEmoji.textContent = item.emoji;
