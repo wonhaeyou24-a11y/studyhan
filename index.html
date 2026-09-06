@@ -1033,6 +1033,17 @@ function startStage(stage) {
 }
 
 btnBackToMenu.addEventListener('click', () => {
+  // 정답/오답 반응이 아직 끝나기 전에(자동으로 다음 문제로 넘어가는 타이머가
+  // 살아있는 채로) 목록으로 나가버리면, 그 타이머가 나중에 몰래 발동해서 전혀
+  // 다른 단계(다음에 들어간 단계)의 문제를 갑자기 넘겨버리는 문제가 있었음
+  // -> 나갈 때 타이머와 반응 화면 관련 상태를 전부 정리함
+  clearTimeout(reactionAutoAdvanceTimer);
+  reactionOverlay.classList.remove('show');
+  levelupOverlay.classList.remove('show');
+  pendingLevelUp = false;
+  blankRetryPending = false;
+  selfCheckRow.style.display = 'none';
+  actionButtonsRow.style.display = 'flex';
   learnScreen.style.display = 'none';
   stageMenu.style.display = 'flex';
   renderMenu();
@@ -1394,6 +1405,14 @@ function computeCoverage() {
 
 const PASS_THRESHOLD = 0.85; // 85% 이상 겹치면 정답 처리
 
+// 빈칸 채우기는 힌트(정답 글자)가 아직 안 보이는 동안은 아이가 "기억만으로"
+// 써야 해서, 화면에 없는 정확한 위치·크기의 글자 모양과 픽셀로 비교하면 아무리
+// 잘 써도 거의 다 오답으로 나옴 - 그래서 힌트가 보이기 전까지는 그림보고 쓰기와
+// 똑같이 자동채점 대신 정답을 보여주고 스스로 맞았는지 판단하게 함
+function isBlankHintRevealed() {
+  return !!(currentStage && currentStage.blankFill && blankWrongAttempts >= BLANK_HINT_THRESHOLD);
+}
+
 btnSubmit.addEventListener('click', () => {
   clearError();
   const inkHasContent = inkCtx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data.some((v, i) => i % 4 === 3 && v > 50);
@@ -1409,6 +1428,16 @@ btnSubmit.addEventListener('click', () => {
     traceGuide.classList.remove('hidden');
     traceGuide.textContent = text;
     traceGuide.style.fontSize = traceFontSizeFor(text) + 'px';
+    statusText.textContent = '내가 쓴 글자와 정답을 비교해보세요!';
+    actionButtonsRow.style.display = 'none';
+    selfCheckRow.style.display = 'flex';
+    return;
+  }
+  if (currentStage.blankFill && !isBlankHintRevealed()) {
+    const blankChar = currentQueue[idx].blankChar;
+    traceGuide.classList.remove('hidden');
+    traceGuide.textContent = blankChar;
+    traceGuide.style.fontSize = traceFontSizeFor(blankChar) + 'px';
     statusText.textContent = '내가 쓴 글자와 정답을 비교해보세요!';
     actionButtonsRow.style.display = 'none';
     selfCheckRow.style.display = 'flex';
