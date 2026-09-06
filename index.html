@@ -63,13 +63,8 @@
     color: rgba(0,0,0,0.18);
     pointer-events: none;
   }
-  .trace-guide.hidden { display: none; }
+  .trace-guide.hidden, .char.hidden { display: none; }
   #inkCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .stroke-order-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .stroke-order-svg .stroke-body { fill: none; stroke: #cfd3d8; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
-  .stroke-order-svg .stroke-path { fill: none; stroke: #4fa8e8; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 3 2.6; }
-  .stroke-order-svg .stroke-num-bg { fill: #4fa8e8; }
-  .stroke-order-svg .stroke-num-text { fill: white; font-size: 4.6px; font-weight: 900; text-anchor: middle; dominant-baseline: central; }
   .controls-footer {
     display: flex; flex-direction: column; align-items: center;
     margin-top: auto; padding-top: clamp(6px, 1.6vh, 16px); padding-bottom: clamp(10px, 2.4vh, 22px);
@@ -293,13 +288,6 @@
 
     <div class="trace-wrap" id="traceWrap">
       <div class="trace-guide" id="traceGuide">가</div>
-      <svg id="strokeOrderSvg" class="stroke-order-svg" viewBox="0 0 100 100">
-        <defs>
-          <marker id="strokeArrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="2.4" markerHeight="2.4" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" fill="#4fa8e8"></path>
-          </marker>
-        </defs>
-      </svg>
       <canvas id="inkCanvas"></canvas>
     </div>
   </div>
@@ -338,6 +326,41 @@
 
 <script>
 // ===== 학습 커리큘럼 (단계별) =====
+// '단어'와 '단어(그림보고 쓰기)' 단계가 같은 목록을 공유해서 씀
+const KOREAN_WORD_ITEMS = [
+  { char: '사과', emoji: '🍎' }, { char: '나비', emoji: '🦋' }, { char: '우산', emoji: '☂️' }, { char: '모자', emoji: '🎩' },
+  { char: '여우', emoji: '🦊' }, { char: '거북이', emoji: '🐢' }, { char: '토끼', emoji: '🐰' }, { char: '강아지', emoji: '🐶' },
+  { char: '고양이', emoji: '🐱' }, { char: '코끼리', emoji: '🐘' }, { char: '사자', emoji: '🦁' }, { char: '호랑이', emoji: '🐯' },
+  { char: '곰', emoji: '🐻' }, { char: '판다', emoji: '🐼' }, { char: '원숭이', emoji: '🐵' }, { char: '병아리', emoji: '🐤' },
+  { char: '오리', emoji: '🦆' }, { char: '물고기', emoji: '🐟' }, { char: '문어', emoji: '🐙' }, { char: '개구리', emoji: '🐸' },
+  { char: '뱀', emoji: '🐍' }, { char: '거미', emoji: '🕷️' }, { char: '다람쥐', emoji: '🐿️' }, { char: '소', emoji: '🐮' },
+  { char: '돼지', emoji: '🐷' }, { char: '양', emoji: '🐑' }, { char: '말', emoji: '🐴' }, { char: '닭', emoji: '🐔' },
+  { char: '부엉이', emoji: '🦉' }, { char: '벌', emoji: '🐝' }, { char: '달팽이', emoji: '🐌' }, { char: '게', emoji: '🦀' },
+  { char: '상어', emoji: '🦈' }, { char: '고래', emoji: '🐳' }, { char: '펭귄', emoji: '🐧' }, { char: '공룡', emoji: '🦖' },
+  { char: '유니콘', emoji: '🦄' }, { char: '무당벌레', emoji: '🐞' }, { char: '해', emoji: '☀️' }, { char: '달', emoji: '🌙' },
+  { char: '별', emoji: '⭐' }, { char: '구름', emoji: '☁️' }, { char: '비', emoji: '🌧️' }, { char: '눈', emoji: '❄️' },
+  { char: '무지개', emoji: '🌈' }, { char: '바다', emoji: '🌊' }, { char: '산', emoji: '⛰️' }, { char: '나무', emoji: '🌳' },
+  { char: '꽃', emoji: '🌸' }, { char: '잎', emoji: '🍃' }, { char: '불꽃', emoji: '🔥' }, { char: '얼음', emoji: '🧊' },
+  { char: '바람', emoji: '💨' }, { char: '화산', emoji: '🌋' }, { char: '배', emoji: '🍐' }, { char: '바나나', emoji: '🍌' },
+  { char: '포도', emoji: '🍇' }, { char: '수박', emoji: '🍉' }, { char: '딸기', emoji: '🍓' }, { char: '오렌지', emoji: '🍊' },
+  { char: '레몬', emoji: '🍋' }, { char: '복숭아', emoji: '🍑' }, { char: '파인애플', emoji: '🍍' }, { char: '당근', emoji: '🥕' },
+  { char: '감자', emoji: '🥔' }, { char: '옥수수', emoji: '🌽' }, { char: '토마토', emoji: '🍅' }, { char: '계란', emoji: '🥚' },
+  { char: '치즈', emoji: '🧀' }, { char: '빵', emoji: '🍞' }, { char: '밥', emoji: '🍚' }, { char: '라면', emoji: '🍜' },
+  { char: '피자', emoji: '🍕' }, { char: '햄버거', emoji: '🍔' }, { char: '핫도그', emoji: '🌭' }, { char: '도넛', emoji: '🍩' },
+  { char: '쿠키', emoji: '🍪' }, { char: '케이크', emoji: '🎂' }, { char: '사탕', emoji: '🍬' }, { char: '초콜릿', emoji: '🍫' },
+  { char: '아이스크림', emoji: '🍦' }, { char: '우유', emoji: '🥛' }, { char: '주스', emoji: '🧃' }, { char: '집', emoji: '🏠' },
+  { char: '학교', emoji: '🏫' }, { char: '병원', emoji: '🏥' }, { char: '가방', emoji: '🎒' }, { char: '신발', emoji: '👟' },
+  { char: '시계', emoji: '⏰' }, { char: '열쇠', emoji: '🔑' }, { char: '편지', emoji: '💌' }, { char: '선물', emoji: '🎁' },
+  { char: '풍선', emoji: '🎈' }, { char: '인형', emoji: '🧸' }, { char: '공', emoji: '🏀' }, { char: '축구공', emoji: '⚽' },
+  { char: '기타', emoji: '🎸' }, { char: '피아노', emoji: '🎹' }, { char: '드럼', emoji: '🥁' }, { char: '나팔', emoji: '🎺' },
+  { char: '책', emoji: '📖' }, { char: '연필', emoji: '✏️' }, { char: '가위', emoji: '✂️' }, { char: '그림', emoji: '🎨' },
+  { char: '카메라', emoji: '📷' }, { char: '전화', emoji: '☎️' }, { char: '텔레비전', emoji: '📺' }, { char: '컴퓨터', emoji: '💻' },
+  { char: '자동차', emoji: '🚗' }, { char: '버스', emoji: '🚌' }, { char: '기차', emoji: '🚆' }, { char: '비행기', emoji: '✈️' },
+  { char: '로켓', emoji: '🚀' }, { char: '반지', emoji: '💍' }, { char: '왕관', emoji: '👑' }, { char: '눈사람', emoji: '⛄' },
+  { char: '크리스마스트리', emoji: '🎄' }, { char: '촛불', emoji: '🕯️' }, { char: '미끄럼틀', emoji: '🛝' }, { char: '부채', emoji: '🪭' },
+  { char: '안경', emoji: '👓' }, { char: '우체통', emoji: '📮' },
+].map(o => ({ ...o, accepts: [o.char] }));
+
 const STAGES = [
   // ---- 국어 ----
   {
@@ -354,39 +377,11 @@ const STAGES = [
   },
   {
     id: 'words', lang: 'ko-KR', label: '단어', group: 'ko', type: 'trace', hintMode: true,
-    items: [
-      { char: '사과', emoji: '🍎' }, { char: '나비', emoji: '🦋' }, { char: '우산', emoji: '☂️' }, { char: '모자', emoji: '🎩' },
-      { char: '여우', emoji: '🦊' }, { char: '거북이', emoji: '🐢' }, { char: '토끼', emoji: '🐰' }, { char: '강아지', emoji: '🐶' },
-      { char: '고양이', emoji: '🐱' }, { char: '코끼리', emoji: '🐘' }, { char: '사자', emoji: '🦁' }, { char: '호랑이', emoji: '🐯' },
-      { char: '곰', emoji: '🐻' }, { char: '판다', emoji: '🐼' }, { char: '원숭이', emoji: '🐵' }, { char: '병아리', emoji: '🐤' },
-      { char: '오리', emoji: '🦆' }, { char: '물고기', emoji: '🐟' }, { char: '문어', emoji: '🐙' }, { char: '개구리', emoji: '🐸' },
-      { char: '뱀', emoji: '🐍' }, { char: '거미', emoji: '🕷️' }, { char: '다람쥐', emoji: '🐿️' }, { char: '소', emoji: '🐮' },
-      { char: '돼지', emoji: '🐷' }, { char: '양', emoji: '🐑' }, { char: '말', emoji: '🐴' }, { char: '닭', emoji: '🐔' },
-      { char: '부엉이', emoji: '🦉' }, { char: '벌', emoji: '🐝' }, { char: '달팽이', emoji: '🐌' }, { char: '게', emoji: '🦀' },
-      { char: '상어', emoji: '🦈' }, { char: '고래', emoji: '🐳' }, { char: '펭귄', emoji: '🐧' }, { char: '공룡', emoji: '🦖' },
-      { char: '유니콘', emoji: '🦄' }, { char: '무당벌레', emoji: '🐞' }, { char: '해', emoji: '☀️' }, { char: '달', emoji: '🌙' },
-      { char: '별', emoji: '⭐' }, { char: '구름', emoji: '☁️' }, { char: '비', emoji: '🌧️' }, { char: '눈', emoji: '❄️' },
-      { char: '무지개', emoji: '🌈' }, { char: '바다', emoji: '🌊' }, { char: '산', emoji: '⛰️' }, { char: '나무', emoji: '🌳' },
-      { char: '꽃', emoji: '🌸' }, { char: '잎', emoji: '🍃' }, { char: '불꽃', emoji: '🔥' }, { char: '얼음', emoji: '🧊' },
-      { char: '바람', emoji: '💨' }, { char: '화산', emoji: '🌋' }, { char: '배', emoji: '🍐' }, { char: '바나나', emoji: '🍌' },
-      { char: '포도', emoji: '🍇' }, { char: '수박', emoji: '🍉' }, { char: '딸기', emoji: '🍓' }, { char: '오렌지', emoji: '🍊' },
-      { char: '레몬', emoji: '🍋' }, { char: '복숭아', emoji: '🍑' }, { char: '파인애플', emoji: '🍍' }, { char: '당근', emoji: '🥕' },
-      { char: '감자', emoji: '🥔' }, { char: '옥수수', emoji: '🌽' }, { char: '토마토', emoji: '🍅' }, { char: '계란', emoji: '🥚' },
-      { char: '치즈', emoji: '🧀' }, { char: '빵', emoji: '🍞' }, { char: '밥', emoji: '🍚' }, { char: '라면', emoji: '🍜' },
-      { char: '피자', emoji: '🍕' }, { char: '햄버거', emoji: '🍔' }, { char: '핫도그', emoji: '🌭' }, { char: '도넛', emoji: '🍩' },
-      { char: '쿠키', emoji: '🍪' }, { char: '케이크', emoji: '🎂' }, { char: '사탕', emoji: '🍬' }, { char: '초콜릿', emoji: '🍫' },
-      { char: '아이스크림', emoji: '🍦' }, { char: '우유', emoji: '🥛' }, { char: '주스', emoji: '🧃' }, { char: '집', emoji: '🏠' },
-      { char: '학교', emoji: '🏫' }, { char: '병원', emoji: '🏥' }, { char: '가방', emoji: '🎒' }, { char: '신발', emoji: '👟' },
-      { char: '시계', emoji: '⏰' }, { char: '열쇠', emoji: '🔑' }, { char: '편지', emoji: '💌' }, { char: '선물', emoji: '🎁' },
-      { char: '풍선', emoji: '🎈' }, { char: '인형', emoji: '🧸' }, { char: '공', emoji: '🏀' }, { char: '축구공', emoji: '⚽' },
-      { char: '기타', emoji: '🎸' }, { char: '피아노', emoji: '🎹' }, { char: '드럼', emoji: '🥁' }, { char: '나팔', emoji: '🎺' },
-      { char: '책', emoji: '📖' }, { char: '연필', emoji: '✏️' }, { char: '가위', emoji: '✂️' }, { char: '그림', emoji: '🎨' },
-      { char: '카메라', emoji: '📷' }, { char: '전화', emoji: '☎️' }, { char: '텔레비전', emoji: '📺' }, { char: '컴퓨터', emoji: '💻' },
-      { char: '자동차', emoji: '🚗' }, { char: '버스', emoji: '🚌' }, { char: '기차', emoji: '🚆' }, { char: '비행기', emoji: '✈️' },
-      { char: '로켓', emoji: '🚀' }, { char: '반지', emoji: '💍' }, { char: '왕관', emoji: '👑' }, { char: '눈사람', emoji: '⛄' },
-      { char: '크리스마스트리', emoji: '🎄' }, { char: '촛불', emoji: '🕯️' }, { char: '미끄럼틀', emoji: '🛝' }, { char: '부채', emoji: '🪭' },
-      { char: '안경', emoji: '👓' }, { char: '우체통', emoji: '📮' },
-    ].map(o => ({ ...o, accepts: [o.char] }))
+    items: KOREAN_WORD_ITEMS
+  },
+  {
+    id: 'words-picture', lang: 'ko-KR', label: '단어 (그림보고 쓰기)', group: 'ko', type: 'trace', pictureWriting: true,
+    items: KOREAN_WORD_ITEMS
   },
   {
     id: 'sentence1', lang: 'ko-KR', label: '문장 1단계 (짧은)', group: 'ko', type: 'read',
@@ -521,7 +516,6 @@ const stageList = document.getElementById('stageList');
 const learnScreen = document.getElementById('learnScreen');
 const btnBackToMenu = document.getElementById('btnBackToMenu');
 const btnHint = document.getElementById('btnHint');
-const strokeOrderSvg = document.getElementById('strokeOrderSvg');
 const practiceRow = document.getElementById('practiceRow');
 const menuTitle = document.getElementById('menuTitle');
 const btnMenuBack = document.getElementById('btnMenuBack');
@@ -579,10 +573,43 @@ btnMenuBack.addEventListener('click', () => {
 
 renderMenu();
 
-// 단계에 저장된 전체 항목이 많아도(예: 단어 122개) 한 판은 ROUND_SIZE개로 제한해서
+// 자음/모음/가나다/알파벳/히라가나처럼 항목이 적은 "기초" 단계는 처음부터 끝까지
+// 순서대로 한 바퀴 다 연습하고, 다 끝나면(goToNextItem의 복습 로직이) 오답만
+// 모아서 복습함 - 무작위로 일부만 뽑지 않고 전체를 순서대로 익히는 게 목적
+const SEQUENTIAL_FULL_STAGES = ['consonants', 'vowels', 'ganada', 'en-upper', 'en-lower', 'ja-hiragana'];
+
+// 단어처럼 항목이 아주 많은 단계는 하루 최대 DAILY_CHUNK_SIZE개만 순서대로 연습하고
+// 다음날 그 다음 묶음으로 넘어감(다 돌면 처음부터 다시). 같은 날 다시 들어오면
+// 이어서 같은 묶음을 보여줌 - localStorage에 날짜/묶음 번호를 저장해서 기억함
+const DAILY_WORD_STAGES = ['words', 'en-words', 'ja-words', 'words-picture'];
+const DAILY_CHUNK_SIZE = 15;
+function getDailyChunk(stage) {
+  const key = 'dailyProgress_' + stage.id;
+  const today = new Date().toISOString().slice(0, 10);
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(key)); } catch (e) { saved = null; }
+  let chunkIndex;
+  if (saved && saved.date === today) {
+    chunkIndex = saved.chunkIndex;
+  } else {
+    chunkIndex = saved ? saved.chunkIndex + 1 : 0;
+    try { localStorage.setItem(key, JSON.stringify({ date: today, chunkIndex })); } catch (e) {}
+  }
+  const totalChunks = Math.max(1, Math.ceil(stage.items.length / DAILY_CHUNK_SIZE));
+  const actual = chunkIndex % totalChunks;
+  return stage.items.slice(actual * DAILY_CHUNK_SIZE, actual * DAILY_CHUNK_SIZE + DAILY_CHUNK_SIZE);
+}
+
+// 단계에 저장된 전체 항목이 많아도(예: 문장 17개) 한 판은 ROUND_SIZE개로 제한해서
 // 스티커판/화면이 한 번에 다 보이게 함. 항목이 적으면(ROUND_SIZE 이하) 그대로 다 사용.
 const ROUND_SIZE = 5;
 function pickRoundItems(stage) {
+  if (SEQUENTIAL_FULL_STAGES.includes(stage.id)) {
+    return stage.items;
+  }
+  if (DAILY_WORD_STAGES.includes(stage.id)) {
+    return getDailyChunk(stage);
+  }
   const items = stage.items;
   if (items.length <= ROUND_SIZE) return items;
   const shuffled = [...items].sort(() => Math.random() - 0.5);
@@ -596,6 +623,7 @@ function startStage(stage) {
   reviewMap = new Map();
   idx = 0;
   roundStickers = new Array(currentQueue.length).fill(null);
+  btnHint.textContent = stage.pictureWriting ? '🔍 정답 보기' : '🔍 그림 힌트 보기';
 
   // 학습 타입에 따라 따라쓰기 화면 / 읽기 화면 전환
   const isTrace = stage.type === 'trace';
@@ -781,7 +809,11 @@ btnSubmit.addEventListener('click', () => {
 
 // 문장(읽기) 단계: 손으로 쓰지 않으므로 스스로 "다 읽었다"고 표시하면 정답 처리
 btnHint.addEventListener('click', () => {
-  itemEmoji.classList.add('show');
+  if (currentStage.pictureWriting) {
+    charDisplay.classList.remove('hidden');
+  } else {
+    itemEmoji.classList.add('show');
+  }
   btnHint.classList.remove('show');
 });
 
@@ -855,153 +887,28 @@ function sizeTraceBox() {
   if (currentQueue[idx]) {
     const text = currentQueue[idx].char;
     charDisplay.style.fontSize = fitFontSizeFor(text, size * 0.62) + 'px';
-    traceGuide.style.fontSize = traceFontSizeFor(text) + 'px';
+    if (!currentStage.pictureWriting) {
+      traceGuide.style.fontSize = traceFontSizeFor(text) + 'px';
+    }
     drawGuideMask(text);
-    renderStrokeOrder(text);
   }
 }
 window.addEventListener('resize', sizeTraceBox);
 
-// ===== 획순 안내 (자음/모음만 제공) =====
-// 좌표는 0~100 기준 (박스 크기에 맞춰 자동으로 늘어남). 선 획은 [x,y] 점들의 배열,
-// 동그라미 획(ㅇ, ㅎ의 아래 원)은 {circle:[cx,cy,r]}로 표현.
-// 참고: ㄱㄴㅇ 등 기본 획은 확실한 필순을 그대로 썼고, ㄹㅂㅅㅈㅊㅋㅌㅍㅎ처럼 복잡한
-// 자음은 한글 학습 자료(hangeulmate.com 획순 가이드)를 참고해서 획을 하나하나
-// 분리해 좌표를 다시 잡았어요. 그래도 실제 교과서와 다르게 느껴지는 부분이 있으면 알려주세요.
-const STROKE_ORDER = {
-  'ㄱ': [[[25,20],[75,20],[75,80]]],
-  'ㄴ': [[[25,20],[25,80],[75,80]]],
-  'ㄷ': [[[20,20],[80,20]], [[20,20],[20,80]], [[20,80],[80,80]]],
-  'ㄹ': [[[20,15],[80,15]], [[80,15],[80,45]], [[80,45],[20,45]], [[20,45],[20,80]], [[20,80],[80,80]]],
-  'ㅁ': [[[20,20],[20,80]], [[20,20],[80,20]], [[80,20],[80,80]], [[20,80],[80,80]]],
-  'ㅂ': [[[25,15],[25,85]], [[75,15],[75,85]], [[25,42],[75,42]], [[25,66],[75,66]]],
-  'ㅅ': [[[48,15],[18,85]], [[52,15],[82,85]]],
-  'ㅇ': [{ circle: [50, 50, 35] }],
-  'ㅈ': [[[32,18],[62,18]], [[48,32],[20,85]], [[52,32],[82,85]]],
-  'ㅊ': [[[42,5],[54,15]], [[30,26],[68,26]], [[48,38],[18,88]], [[52,38],[82,88]]],
-  'ㅋ': [[[25,20],[75,20]], [[75,20],[75,80]], [[45,45],[75,45]]],
-  'ㅌ': [[[20,15],[80,15]], [[20,15],[20,85]], [[20,50],[65,50]], [[20,85],[80,85]]],
-  'ㅍ': [[[20,15],[20,85]], [[20,15],[80,15]], [[80,15],[80,85]], [[20,68],[80,68]]],
-  'ㅎ': [[[40,6],[54,15]], [[25,26],[75,26]], { circle: [50, 60, 26] }],
-  'ㅏ': [[[35,10],[35,90]], [[35,45],[72,45]]],
-  'ㅑ': [[[35,10],[35,90]], [[35,32],[72,32]], [[35,60],[72,60]]],
-  'ㅓ': [[[30,45],[65,45]], [[65,10],[65,90]]],
-  'ㅕ': [[[30,32],[65,32]], [[30,60],[65,60]], [[65,10],[65,90]]],
-  'ㅗ': [[[15,65],[85,65]], [[50,15],[50,65]]],
-  'ㅛ': [[[15,65],[85,65]], [[35,15],[35,65]], [[65,15],[65,65]]],
-  'ㅜ': [[[50,35],[50,85]], [[15,35],[85,35]]],
-  'ㅠ': [[[35,35],[35,85]], [[65,35],[65,85]], [[15,35],[85,35]]],
-  'ㅡ': [[[15,50],[85,50]]],
-  'ㅣ': [[[50,15],[50,85]]],
-};
-
-// ㄱㄴㄷ... 조합형 한글 음절(가,나,다...)은 초성+중성 획을 각자 영역으로
-// 축소/이동해서 합쳐줌 (받침 있는 글자나 겹모음은 아직 지원 안 함)
-const HANGUL_INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-const HANGUL_MEDIALS = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
-const VERTICAL_VOWELS = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅣ']; // 초성 왼쪽 / 중성 오른쪽
-const HORIZONTAL_VOWELS = ['ㅗ','ㅛ','ㅜ','ㅠ','ㅡ']; // 초성 위 / 중성 아래
-
-// stroke 좌표(0~100 기준)를 새 영역(x0~x1, y0~y1) 안에 맞게 축소·이동
-function remapStrokes(strokes, x0, x1, y0, y1) {
-  const mapX = (v) => x0 + (v / 100) * (x1 - x0);
-  const mapY = (v) => y0 + (v / 100) * (y1 - y0);
-  return strokes.map((stroke) => {
-    if (stroke.circle) {
-      const [cx, cy, r] = stroke.circle;
-      const rx = (r / 100) * (x1 - x0);
-      const ry = (r / 100) * (y1 - y0);
-      return { circle: [mapX(cx), mapY(cy), Math.min(rx, ry)] };
-    }
-    return stroke.map((p) => [mapX(p[0]), mapY(p[1])]);
-  });
-}
-
-function composeSyllableStrokes(char) {
-  const code = char.charCodeAt(0) - 0xac00;
-  if (code < 0 || code > 11171) return null;
-  const finalIdx = code % 28;
-  if (finalIdx !== 0) return null; // 받침 있는 글자는 아직 지원 안 함
-  const initial = HANGUL_INITIALS[Math.floor(code / 588)];
-  const medial = HANGUL_MEDIALS[Math.floor((code % 588) / 28)];
-  const initialStrokes = STROKE_ORDER[initial];
-  const medialStrokes = STROKE_ORDER[medial];
-  if (!initialStrokes || !medialStrokes) return null;
-  if (VERTICAL_VOWELS.includes(medial)) {
-    return [...remapStrokes(initialStrokes, 0, 46, 8, 92), ...remapStrokes(medialStrokes, 54, 100, 8, 92)];
-  }
-  if (HORIZONTAL_VOWELS.includes(medial)) {
-    return [...remapStrokes(initialStrokes, 8, 92, 0, 46), ...remapStrokes(medialStrokes, 8, 92, 54, 100)];
-  }
-  return null; // 복합모음(ㅘㅢ 등)은 아직 지원 안 함
-}
-
-// 글자를 폰트로 흐리게 보여주는 대신, 획순 데이터를 그대로 두꺼운 선으로 그려서
-// "글자 몸통"을 만들고 그 위에 점선 화살표를 겹쳐 그림 (그래야 화살표가 글자와
-// 정확히 겹쳐 보임 - 폰트 글자 모양과 좌표가 어긋나는 문제 방지)
-// 반환값: 획순 데이터가 있어서 그렸으면 true, 없으면 false
-function renderStrokeOrder(char) {
-  let strokes = STROKE_ORDER[char];
-  if (!strokes && char.length === 1) {
-    strokes = composeSyllableStrokes(char);
-  }
-  // 기존에 그렸던 획 요소만 제거 (defs는 남김)
-  strokeOrderSvg.querySelectorAll('.stroke-group').forEach((el) => el.remove());
-  if (!strokes) return false;
-  strokes.forEach((stroke, i) => {
-    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    g.setAttribute('class', 'stroke-group');
-    let d, startX, startY;
-    if (stroke.circle) {
-      const [cx, cy, r] = stroke.circle;
-      // 원을 거의 한 바퀴(340도) 그려서 화살표가 보이도록 함
-      d = `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - r * 0.34} ${cy - r * 0.94}`;
-      startX = cx; startY = cy - r;
-    } else {
-      d = stroke.map((p, i2) => `${i2 === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ');
-      // 번호를 시작점에서 살짝 안쪽으로 밀어서 표시 (ㅁ,ㄷ처럼 두 획이 같은 모서리에서
-      // 시작할 때 번호 배지가 서로 겹치는 것 방지)
-      const [x0, y0] = stroke[0];
-      const [x1, y1] = stroke[1];
-      const dx = x1 - x0, dy = y1 - y0;
-      const len = Math.hypot(dx, dy) || 1;
-      const off = Math.min(7, len * 0.32);
-      startX = x0 + (dx / len) * off;
-      startY = y0 + (dy / len) * off;
-    }
-    const body = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    body.setAttribute('d', d);
-    body.setAttribute('class', 'stroke-body');
-    g.appendChild(body);
-    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    arrow.setAttribute('d', d);
-    arrow.setAttribute('class', 'stroke-path');
-    arrow.setAttribute('marker-end', 'url(#strokeArrow)');
-    g.appendChild(arrow);
-    addStrokeNumber(g, startX, startY, i + 1);
-    strokeOrderSvg.appendChild(g);
-  });
-  return true;
-}
-function addStrokeNumber(g, x, y, num) {
-  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  bg.setAttribute('cx', x); bg.setAttribute('cy', y); bg.setAttribute('r', 3.2);
-  bg.setAttribute('class', 'stroke-num-bg');
-  const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-  label.setAttribute('x', x); label.setAttribute('y', y);
-  label.setAttribute('class', 'stroke-num-text');
-  label.textContent = num;
-  g.appendChild(bg);
-  g.appendChild(label);
-}
 
 function renderItem() {
   const item = currentQueue[idx];
   const text = item.char;
   charDisplay.textContent = text;
   charDisplay.style.fontSize = currentStage.type === 'read' ? '38px' : fitFontSizeFor(text, currentBoxSize * 0.62) + 'px';
+  charDisplay.classList.toggle('hidden', !!currentStage.pictureWriting);
 
-  if (item.emoji) {
+  if (currentStage.pictureWriting) {
+    // 그림보고 쓰기 모드: 그림은 항상 보여주고, 정답 글자는 버튼을 눌러야 보임
+    itemEmoji.textContent = item.emoji || '';
+    itemEmoji.classList.add('show');
+    btnHint.classList.add('show');
+  } else if (item.emoji) {
     itemEmoji.textContent = item.emoji;
     if (currentStage.hintMode) {
       itemEmoji.classList.remove('show');
@@ -1018,10 +925,10 @@ function renderItem() {
   progress.textContent = `${idx+1} / ${currentQueue.length}`;
 
   if (currentStage.type === 'trace') {
-    const hasStrokes = renderStrokeOrder(text);
-    // 획순 그림이 있으면 그걸로 충분해서 흐릿한 폰트 글자는 숨김 (둘이 겹치면 위치가 안 맞아 보임)
-    traceGuide.classList.toggle('hidden', hasStrokes);
-    if (!hasStrokes) {
+    // 그림보고 쓰기 모드는 정답 글자 모양을 미리 보여주면 안 되니 흐린 가이드도 숨김
+    // (채점용 캔버스는 그대로 그려서 자동 채점은 정상 동작함)
+    traceGuide.classList.toggle('hidden', !!currentStage.pictureWriting);
+    if (!currentStage.pictureWriting) {
       traceGuide.textContent = text;
       traceGuide.style.fontSize = traceFontSizeFor(text) + 'px';
     }
@@ -1031,7 +938,9 @@ function renderItem() {
 
   statusText.textContent = mode === 'review'
     ? "💪 복습 중이에요! 다시 한번 해볼까요?"
-    : (currentStage.type === 'read' ? "소리 내어 읽어볼까요?" : "손가락으로 글자를 따라 써보세요");
+    : currentStage.type === 'read' ? "소리 내어 읽어볼까요?"
+    : currentStage.pictureWriting ? "그림을 보고 글자를 써보세요"
+    : "손가락으로 글자를 따라 써보세요";
   clearError();
 }
 
