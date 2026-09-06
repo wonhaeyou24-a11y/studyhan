@@ -46,8 +46,8 @@
   }
   .trace-wrap {
     position: relative;
-    width: min(78vw, 33vh, 400px);
-    height: min(78vw, 33vh, 400px);
+    width: min(82vw, 36vh, 460px);
+    height: min(82vw, 36vh, 460px);
     margin: 0;
     border: 3px dashed #cfd8dc;
     border-radius: 28px;
@@ -61,12 +61,19 @@
     color: rgba(0,0,0,0.18);
     pointer-events: none;
   }
+  .trace-guide.hidden { display: none; }
   #inkCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   .stroke-order-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .stroke-order-svg .stroke-path { fill: none; stroke: #4fa8e8; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 5 4; opacity: 0.85; }
+  .stroke-order-svg .stroke-body { fill: none; stroke: #cfd3d8; stroke-width: 13; stroke-linecap: round; stroke-linejoin: round; }
+  .stroke-order-svg .stroke-path { fill: none; stroke: #4fa8e8; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 5 4; }
   .stroke-order-svg .stroke-num-bg { fill: #4fa8e8; }
   .stroke-order-svg .stroke-num-text { fill: white; font-size: 9px; font-weight: 900; text-anchor: middle; dominant-baseline: central; }
-  .trace-buttons-row {
+  .controls-footer {
+    display: flex; flex-direction: column; align-items: center;
+    margin-top: auto; padding-top: clamp(6px, 1.6vh, 16px); padding-bottom: clamp(10px, 2.4vh, 22px);
+    flex-shrink: 0; width: 100%;
+  }
+  .action-buttons-row {
     display: flex; gap: clamp(8px, 2vw, 20px); flex-wrap: wrap; justify-content: center;
     margin-bottom: clamp(4px, 1vh, 12px);
   }
@@ -112,10 +119,6 @@
   .levelup-card img { width: 160px; margin-bottom: 12px; }
   .levelup-title { font-size: 30px; font-weight: 900; color: #e08a00; margin-bottom: 6px; }
   .levelup-sub { font-size: 20px; color: #777; margin-bottom: 18px; }
-  .buttons-row {
-    display: flex; gap: clamp(10px, 3vw, 24px); flex-wrap: wrap; justify-content: center;
-    margin-bottom: clamp(4px, 1.2vh, 14px);
-  }
   button {
     font-size: clamp(15px, 2.8vh, 32px);
     font-weight: bold;
@@ -298,21 +301,20 @@
       </svg>
     </div>
   </div>
-  <div class="trace-buttons-row" id="traceButtonsRow">
-    <button class="btn-clear" id="btnClear">🧹 지우기</button>
-    <button class="btn-submit" id="btnSubmit">✅ 다 썼어요!</button>
+  <div class="controls-footer" id="controlsFooter">
+    <div class="status" id="statusText">손가락으로 글자를 따라 써보세요</div>
+    <div class="error-box" id="errorBox"></div>
+
+    <div class="action-buttons-row">
+      <button class="btn-clear" id="btnClear">🧹 지우기</button>
+      <button class="btn-submit" id="btnSubmit">✅ 다 썼어요!</button>
+      <button class="btn-submit" id="btnReadDone" style="display:none;">✅ 다 읽었어요!</button>
+      <button class="btn-listen" id="btnListen">🔊 듣기</button>
+    </div>
+    <div class="mic-hint" id="micHint"></div>
+
+    <div class="mic-hint">🔌 음성 인식 기능은 2차 개발에서 추가돼요</div>
   </div>
-  <button class="btn-submit" id="btnReadDone" style="display:none;">✅ 다 읽었어요!</button>
-
-  <div class="status" id="statusText">손가락으로 글자를 따라 써보세요</div>
-  <div class="error-box" id="errorBox"></div>
-
-  <div class="buttons-row">
-    <button class="btn-listen" id="btnListen">🔊 듣기</button>
-  </div>
-  <div class="mic-hint" id="micHint"></div>
-
-  <div class="mic-hint">🔌 음성 인식 기능은 2차 개발에서 추가돼요</div>
 </div>
 
 <div class="reaction-overlay" id="reactionOverlay">
@@ -511,7 +513,6 @@ const inkCanvas = document.getElementById('inkCanvas');
 const btnClear = document.getElementById('btnClear');
 const btnSubmit = document.getElementById('btnSubmit');
 const traceWrap = document.getElementById('traceWrap');
-const traceButtonsRow = document.getElementById('traceButtonsRow');
 const btnReadDone = document.getElementById('btnReadDone');
 const stageMenu = document.getElementById('stageMenu');
 const stageList = document.getElementById('stageList');
@@ -596,7 +597,8 @@ function startStage(stage) {
   // 학습 타입에 따라 따라쓰기 화면 / 읽기 화면 전환
   const isTrace = stage.type === 'trace';
   traceWrap.style.display = isTrace ? 'block' : 'none';
-  traceButtonsRow.style.display = isTrace ? 'flex' : 'none';
+  btnClear.style.display = isTrace ? 'inline-block' : 'none';
+  btnSubmit.style.display = isTrace ? 'inline-block' : 'none';
   btnReadDone.style.display = isTrace ? 'none' : 'inline-block';
 
   stageMenu.style.display = 'none';
@@ -883,6 +885,10 @@ function composeSyllableStrokes(char) {
   return null; // 복합모음(ㅘㅢ 등)은 아직 지원 안 함
 }
 
+// 글자를 폰트로 흐리게 보여주는 대신, 획순 데이터를 그대로 두꺼운 선으로 그려서
+// "글자 몸통"을 만들고 그 위에 점선 화살표를 겹쳐 그림 (그래야 화살표가 글자와
+// 정확히 겹쳐 보임 - 폰트 글자 모양과 좌표가 어긋나는 문제 방지)
+// 반환값: 획순 데이터가 있어서 그렸으면 true, 없으면 false
 function renderStrokeOrder(char) {
   let strokes = STROKE_ORDER[char];
   if (!strokes && char.length === 1) {
@@ -890,31 +896,41 @@ function renderStrokeOrder(char) {
   }
   // 기존에 그렸던 획 요소만 제거 (defs는 남김)
   strokeOrderSvg.querySelectorAll('.stroke-group').forEach((el) => el.remove());
-  if (!strokes) return;
+  if (!strokes) return false;
   strokes.forEach((stroke, i) => {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('class', 'stroke-group');
+    let d, startX, startY;
     if (stroke.circle) {
       const [cx, cy, r] = stroke.circle;
-      const circlePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       // 원을 거의 한 바퀴(340도) 그려서 화살표가 보이도록 함
-      const d = `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - r * 0.34} ${cy - r * 0.94}`;
-      circlePath.setAttribute('d', d);
-      circlePath.setAttribute('class', 'stroke-path');
-      circlePath.setAttribute('marker-end', 'url(#strokeArrow)');
-      g.appendChild(circlePath);
-      addStrokeNumber(g, cx, cy - r, i + 1);
+      d = `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - r * 0.34} ${cy - r * 0.94}`;
+      startX = cx; startY = cy - r;
     } else {
-      const d = stroke.map((p, i2) => `${i2 === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ');
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', d);
-      path.setAttribute('class', 'stroke-path');
-      path.setAttribute('marker-end', 'url(#strokeArrow)');
-      g.appendChild(path);
-      addStrokeNumber(g, stroke[0][0], stroke[0][1], i + 1);
+      d = stroke.map((p, i2) => `${i2 === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ');
+      // 번호를 시작점에서 살짝 안쪽으로 밀어서 표시 (ㅁ,ㄷ처럼 두 획이 같은 모서리에서
+      // 시작할 때 번호 배지가 서로 겹치는 것 방지)
+      const [x0, y0] = stroke[0];
+      const [x1, y1] = stroke[1];
+      const dx = x1 - x0, dy = y1 - y0;
+      const len = Math.hypot(dx, dy) || 1;
+      const off = Math.min(9, len * 0.35);
+      startX = x0 + (dx / len) * off;
+      startY = y0 + (dy / len) * off;
     }
+    const body = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    body.setAttribute('d', d);
+    body.setAttribute('class', 'stroke-body');
+    g.appendChild(body);
+    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    arrow.setAttribute('d', d);
+    arrow.setAttribute('class', 'stroke-path');
+    arrow.setAttribute('marker-end', 'url(#strokeArrow)');
+    g.appendChild(arrow);
+    addStrokeNumber(g, startX, startY, i + 1);
     strokeOrderSvg.appendChild(g);
   });
+  return true;
 }
 function addStrokeNumber(g, x, y, num) {
   const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -951,11 +967,15 @@ function renderItem() {
   progress.textContent = `${idx+1} / ${currentQueue.length}`;
 
   if (currentStage.type === 'trace') {
-    traceGuide.textContent = text;
-    traceGuide.style.fontSize = traceFontSizeFor(text) + 'px';
+    const hasStrokes = renderStrokeOrder(text);
+    // 획순 그림이 있으면 그걸로 충분해서 흐릿한 폰트 글자는 숨김 (둘이 겹치면 위치가 안 맞아 보임)
+    traceGuide.classList.toggle('hidden', hasStrokes);
+    if (!hasStrokes) {
+      traceGuide.textContent = text;
+      traceGuide.style.fontSize = traceFontSizeFor(text) + 'px';
+    }
     drawGuideMask(text);
     clearInk();
-    renderStrokeOrder(text);
   }
 
   statusText.textContent = mode === 'review'
