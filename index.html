@@ -251,6 +251,31 @@
     padding: 10px 18px; border-radius: 16px; box-shadow: none; min-width: auto; display: none;
   }
   .menu-back-btn.show { display: inline-block; }
+  .menu-backup-btn {
+    position: absolute; right: 0; background: #f0f0f0; color: #666; font-size: 20px;
+    padding: 10px 14px; border-radius: 16px; box-shadow: none; min-width: auto;
+  }
+
+  .backup-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    display: none; align-items: center; justify-content: center; z-index: 12;
+  }
+  .backup-overlay.show { display: flex; }
+  .backup-card {
+    background: white; border-radius: 28px; padding: 28px; max-width: 90vw; width: 420px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .backup-card h2 { margin: 0 0 10px; font-size: clamp(18px, 3vh, 24px); color: #444; }
+  .backup-desc { font-size: clamp(13px, 2vh, 16px); color: #777; margin: 0 0 20px; line-height: 1.5; }
+  .backup-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .btn-backup-export { background: #06d6a0; color: #003d2e; }
+  .btn-backup-import { background: #118ab2; color: white; }
+  .backup-status { font-size: clamp(12px, 1.8vh, 15px); color: #06a06a; min-height: 1.4em; margin: 14px 0 4px; }
+  .backup-status.error { color: #c0392b; }
+  .btn-backup-close {
+    background: #eee; color: #666; box-shadow: none; margin-top: 8px;
+    font-size: clamp(13px, 2vh, 16px); padding: 8px 20px; min-width: auto;
+  }
 
   /* 카테고리 선택 (한글/영어/일어학습) */
   .category-grid {
@@ -323,8 +348,23 @@
   <div class="menu-header">
     <button class="menu-back-btn" id="btnMenuBack">◀</button>
     <h1 id="menuTitle">📚 한글공부 시작하기</h1>
+    <button class="menu-backup-btn" id="btnBackupOpen" title="진도 저장/불러오기">💾</button>
   </div>
   <div id="stageList"></div>
+</div>
+
+<div class="backup-overlay" id="backupOverlay">
+  <div class="backup-card">
+    <h2>💾 진도 저장 / 불러오기</h2>
+    <p class="backup-desc">아이 학습 진도를 파일로 저장해두면 기기를 바꾸거나 브라우저 데이터가 지워져도 다시 불러올 수 있어요.</p>
+    <div class="backup-actions">
+      <button class="btn-backup-export" id="btnBackupExport">📤 파일로 저장</button>
+      <button class="btn-backup-import" id="btnBackupImport">📥 파일에서 불러오기</button>
+    </div>
+    <p class="backup-status" id="backupStatus"></p>
+    <input type="file" id="backupFileInput" accept="application/json" style="display:none;">
+    <button class="btn-backup-close" id="btnBackupClose">닫기</button>
+  </div>
 </div>
 
 <div class="app" id="learnScreen" style="display:none;">
@@ -965,6 +1005,93 @@ let correctCount = 0; // 전체 누적 정답 수 (캐릭터 성장용)
 let roundStickers = new Array(currentQueue.length).fill(null); // 이번 판 스티커 (라운드마다 초기화)
 let currentLevel = 1; // 1~4단계
 
+// 캐릭터 성장 진도(레벨/누적 정답 수)를 localStorage에 저장해서 새로고침하거나
+// 나중에 다시 들어와도 이어지게 함 (원래는 저장이 안 되고 매번 초기화됐음)
+const GROWTH_KEY = 'growthProgress';
+(function loadGrowthProgress() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(GROWTH_KEY)); } catch (e) {}
+  if (saved && Number.isInteger(saved.currentLevel) && saved.currentLevel >= 1 && saved.currentLevel <= GROWTH_IMGS.length) {
+    currentLevel = saved.currentLevel;
+  }
+  if (saved && Number.isInteger(saved.correctCount) && saved.correctCount >= 0) {
+    correctCount = saved.correctCount;
+  }
+})();
+function saveGrowthProgress() {
+  try { localStorage.setItem(GROWTH_KEY, JSON.stringify({ currentLevel, correctCount })); } catch (e) {}
+}
+
+// ===== 진도 백업 (파일로 저장 / 파일에서 불러오기) =====
+// 진도가 이 기기의 localStorage에만 있어서, 기기를 바꾸거나 브라우저 저장공간이
+// 지워지면 그대로 사라짐 -> 부모가 파일 하나로 내보내고 다시 불러올 수 있게 함
+const BACKUP_KEYS = [...DAILY_WORD_STAGES.map((id) => 'dailyProgress_' + id), GROWTH_KEY];
+
+function collectBackupData() {
+  const data = {};
+  BACKUP_KEYS.forEach((key) => {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return;
+    try { data[key] = JSON.parse(raw); } catch (e) {}
+  });
+  return data;
+}
+
+function exportBackup() {
+  const payload = { app: 'studyhan', version: 1, exportedAt: new Date().toISOString(), data: collectBackupData() };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `한글공부_진도_${payload.exportedAt.slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  backupStatus.textContent = '저장했어요! 다운로드 폴더를 확인해보세요.';
+  backupStatus.className = 'backup-status';
+}
+
+function importBackupFromFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const payload = JSON.parse(reader.result);
+      if (!payload || typeof payload.data !== 'object') throw new Error('invalid backup file');
+      Object.keys(payload.data).forEach((key) => {
+        if (!BACKUP_KEYS.includes(key)) return; // 알 수 없는 키는 무시(안전을 위해)
+        localStorage.setItem(key, JSON.stringify(payload.data[key]));
+      });
+      backupStatus.textContent = '불러왔어요! 잠시 후 새로고침됩니다.';
+      backupStatus.className = 'backup-status';
+      setTimeout(() => location.reload(), 1200);
+    } catch (e) {
+      backupStatus.textContent = '불러오기에 실패했어요. 올바른 진도 파일인지 확인해주세요.';
+      backupStatus.className = 'backup-status error';
+    }
+  };
+  reader.readAsText(file);
+}
+
+const backupOverlay = document.getElementById('backupOverlay');
+const backupStatus = document.getElementById('backupStatus');
+const backupFileInput = document.getElementById('backupFileInput');
+document.getElementById('btnBackupOpen').addEventListener('click', () => {
+  backupStatus.textContent = '';
+  backupStatus.className = 'backup-status';
+  backupOverlay.classList.add('show');
+});
+document.getElementById('btnBackupClose').addEventListener('click', () => {
+  backupOverlay.classList.remove('show');
+});
+document.getElementById('btnBackupExport').addEventListener('click', exportBackup);
+document.getElementById('btnBackupImport').addEventListener('click', () => backupFileInput.click());
+backupFileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) importBackupFromFile(file);
+  backupFileInput.value = '';
+});
+
 function renderStickerBoard() {
   stickerBoard.innerHTML = '';
   roundStickers.forEach((sticker) => {
@@ -1346,6 +1473,7 @@ async function showReaction(isCorrect) {
       pendingLevelUp = true;
     }
     renderGrowthBadge();
+    saveGrowthProgress();
   } else {
     reactionImg.src = IMG_ENCOURAGE;
     reactionText.textContent = '괜찮아요, 다시 해봐요!';
