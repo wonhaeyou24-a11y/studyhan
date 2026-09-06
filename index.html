@@ -118,6 +118,39 @@
   .levelup-card img { width: 160px; margin-bottom: 12px; }
   .levelup-title { font-size: 30px; font-weight: 900; color: #e08a00; margin-bottom: 6px; }
   .levelup-sub { font-size: 20px; color: #777; margin-bottom: 18px; }
+
+  /* ===== 그림-단어 짝짓기 미니게임 ===== */
+  .match-app { justify-content: flex-start; }
+  .match-title {
+    font-size: clamp(14px, 2.6vh, 22px); font-weight: bold; color: #555;
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #btnMatchNewRound, #btnMatchBack { flex-shrink: 0; white-space: nowrap; }
+  .match-status { font-size: clamp(14px, 2.6vh, 20px); color: #666; margin: clamp(6px, 1.5vh, 14px) 0; min-height: 1.4em; }
+  .match-board {
+    display: flex; gap: clamp(14px, 4vw, 48px); width: 100%; max-width: 640px;
+    flex: 1; min-height: 0;
+  }
+  .match-col { flex: 1; display: flex; flex-direction: column; gap: clamp(8px, 1.6vh, 14px); min-height: 0; min-width: 0; }
+  .match-card {
+    background: white; border: 3px solid transparent; border-radius: 20px;
+    font-weight: bold; color: #333; padding: clamp(6px, 1.4vh, 14px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    flex: 1; min-width: 0; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; word-break: keep-all;
+  }
+  .match-card.emoji-card { font-size: clamp(24px, 6vh, 46px); }
+  .match-card.word-card { font-size: clamp(13px, 2.4vh, 20px); }
+  .match-card.selected { border-color: #118ab2; }
+  .match-card.correct { background: #d3f9e6; border-color: #06d6a0; opacity: 0.55; pointer-events: none; }
+  .match-card.wrong { background: #ffe3e3; border-color: #ef476f; animation: match-shake 0.3s; }
+  @keyframes match-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  .match-complete { font-size: clamp(20px, 4vh, 30px); font-weight: 900; color: #e08a00; margin-top: clamp(8px, 2vh, 18px); }
   button {
     font-size: clamp(15px, 2.8vh, 32px);
     font-weight: bold;
@@ -231,6 +264,7 @@
   }
   .category-card:nth-child(2) .emoji { background: linear-gradient(135deg, #ff9f1c, #ef476f); }
   .category-card:nth-child(3) .emoji { background: linear-gradient(135deg, #a06cd5, #5e60ce); }
+  .category-card:nth-child(4) .emoji { background: linear-gradient(135deg, #ffd166, #ff9f1c); }
   .category-card .title { font-size: clamp(16px, 3.4vw, 24px); font-weight: bold; color: #333; }
   .category-card .count { font-size: clamp(11px, 2vw, 14px); color: #999; }
 
@@ -310,6 +344,22 @@
     <div class="mic-hint" id="micHint"></div>
 
     <div class="mic-hint">🔌 음성 인식 기능은 2차 개발에서 추가돼요</div>
+  </div>
+</div>
+
+<div class="app match-app" id="matchScreen" style="display:none;">
+  <div class="top-bar">
+    <button class="back-btn" id="btnMatchBack">🏠 목록으로</button>
+    <div class="match-title" id="matchTitle">그림 단어 짝짓기</div>
+    <button class="btn-dev" id="btnMatchNewRound" style="display:none;">🔄 다음 판</button>
+  </div>
+  <div class="match-status" id="matchStatus">그림과 어울리는 단어를 연결해보세요!</div>
+  <div class="match-board">
+    <div class="match-col" id="matchEmojiCol"></div>
+    <div class="match-col" id="matchWordCol"></div>
+  </div>
+  <div class="match-complete" id="matchComplete" style="display:none;">
+    🎉 모두 맞췄어요!
   </div>
 </div>
 
@@ -498,6 +548,13 @@ const STAGES = [
   },
 ];
 
+// 그림-단어 짝짓기 게임: 이미 있는 단어 목록(그림+글자)을 그대로 재사용함
+STAGES.push(
+  { id: 'match-ko', label: '그림 단어 짝짓기 (한국어)', group: 'game', type: 'match', lang: 'ko-KR', items: STAGES.find((s) => s.id === 'words').items },
+  { id: 'match-en', label: '그림 단어 짝짓기 (영어)', group: 'game', type: 'match', lang: 'en-US', items: STAGES.find((s) => s.id === 'en-words').items },
+  { id: 'match-ja', label: '그림 단어 짝짓기 (일본어)', group: 'game', type: 'match', lang: 'ja-JP', items: STAGES.find((s) => s.id === 'ja-words').items },
+);
+
 let currentStage = null;
 let currentQueue = [];
 let mode = 'normal'; // 'normal' | 'review'
@@ -529,12 +586,21 @@ const btnHint = document.getElementById('btnHint');
 const practiceRow = document.getElementById('practiceRow');
 const menuTitle = document.getElementById('menuTitle');
 const btnMenuBack = document.getElementById('btnMenuBack');
+const matchScreen = document.getElementById('matchScreen');
+const matchTitle = document.getElementById('matchTitle');
+const matchStatus = document.getElementById('matchStatus');
+const matchEmojiCol = document.getElementById('matchEmojiCol');
+const matchWordCol = document.getElementById('matchWordCol');
+const matchComplete = document.getElementById('matchComplete');
+const btnMatchBack = document.getElementById('btnMatchBack');
+const btnMatchNewRound = document.getElementById('btnMatchNewRound');
 
 // ===== 단계 선택 화면 (카테고리 → 단계 목록, 2단계 네비게이션) =====
 const GROUPS = [
   { id: 'ko', emoji: '가', title: '한글학습' },
   { id: 'en', emoji: 'A', title: '영어학습' },
   { id: 'ja', emoji: 'あ', title: '일어학습' },
+  { id: 'game', emoji: '🎮', title: '미니게임' },
 ];
 let currentGroup = null; // null = 카테고리 화면, 아니면 해당 그룹의 단계 목록 화면
 
@@ -576,8 +642,11 @@ function renderStageListScreen(groupId) {
   });
 }
 
-// 단어 단계는 "오늘 진도"를, 그 외 단계는 전체 개수를 목록 배지에 보여줌
+// 단어 단계는 "오늘 진도"를, 게임은 "한 판 문제 수"를, 그 외 단계는 전체 개수를 배지에 보여줌
 function stageBadgeText(stage) {
+  if (stage.type === 'match') {
+    return `한 판 ${MATCH_ROUND_SIZE}문제`;
+  }
   if (DAILY_WORD_STAGES.includes(stage.id)) {
     const state = getDailyState(stage);
     return `${state.chunk + 1}/${state.totalChunks}묶음 · 오늘 ${state.correctChars.length}/${state.items.length}`;
@@ -654,6 +723,12 @@ function pickRoundItems(stage) {
 }
 
 function startStage(stage) {
+  if (stage.type === 'match') {
+    currentStage = stage;
+    stageMenu.style.display = 'none';
+    startMatchRound();
+    return;
+  }
   currentStage = stage;
   currentQueue = pickRoundItems(stage);
   mode = 'normal';
@@ -693,6 +768,105 @@ btnBackToMenu.addEventListener('click', () => {
   stageMenu.style.display = 'flex';
   renderMenu();
 });
+
+// ===== 그림-단어 짝짓기 미니게임 =====
+const MATCH_ROUND_SIZE = 5;
+let matchSelectedEmoji = null; // { char, el }
+let matchSelectedWord = null;
+let matchRemaining = 0;
+
+function shuffleArray(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function startMatchRound() {
+  matchTitle.textContent = currentStage.label;
+  matchComplete.style.display = 'none';
+  btnMatchNewRound.style.display = 'none';
+  matchStatus.textContent = '그림과 어울리는 단어를 연결해보세요!';
+  matchSelectedEmoji = null;
+  matchSelectedWord = null;
+
+  const pool = currentStage.items.filter((it) => it.emoji);
+  const picked = shuffleArray(pool).slice(0, Math.min(MATCH_ROUND_SIZE, pool.length));
+  matchRemaining = picked.length;
+
+  matchEmojiCol.innerHTML = '';
+  matchWordCol.innerHTML = '';
+  shuffleArray(picked).forEach((item) => {
+    const btn = document.createElement('button');
+    btn.className = 'match-card emoji-card';
+    btn.textContent = item.emoji;
+    btn.addEventListener('click', () => onMatchCardClick(btn, item, 'emoji'));
+    matchEmojiCol.appendChild(btn);
+  });
+  shuffleArray(picked).forEach((item) => {
+    const btn = document.createElement('button');
+    btn.className = 'match-card word-card';
+    btn.textContent = item.char;
+    btn.addEventListener('click', () => onMatchCardClick(btn, item, 'word'));
+    matchWordCol.appendChild(btn);
+  });
+
+  learnScreen.style.display = 'none';
+  matchScreen.style.display = 'flex';
+}
+
+function onMatchCardClick(btn, item, side) {
+  if (btn.classList.contains('correct')) return;
+  const current = side === 'emoji' ? matchSelectedEmoji : matchSelectedWord;
+  if (current && current.el === btn) {
+    // 같은 카드를 다시 누르면 선택 취소
+    btn.classList.remove('selected');
+    if (side === 'emoji') matchSelectedEmoji = null; else matchSelectedWord = null;
+    return;
+  }
+  if (current) current.el.classList.remove('selected'); // 같은 쪽에서 다른 카드로 바꿔 선택
+  btn.classList.add('selected');
+  const picked = { char: item.char, el: btn };
+  if (side === 'emoji') matchSelectedEmoji = picked; else matchSelectedWord = picked;
+
+  if (matchSelectedEmoji && matchSelectedWord) checkMatchPair();
+}
+
+function checkMatchPair() {
+  const emojiPick = matchSelectedEmoji;
+  const wordPick = matchSelectedWord;
+  matchSelectedEmoji = null;
+  matchSelectedWord = null;
+
+  if (emojiPick.char === wordPick.char) {
+    emojiPick.el.classList.remove('selected');
+    wordPick.el.classList.remove('selected');
+    emojiPick.el.classList.add('correct');
+    wordPick.el.classList.add('correct');
+    playSuccessJingle();
+    matchRemaining--;
+    if (matchRemaining <= 0) {
+      matchStatus.textContent = '';
+      matchComplete.style.display = 'block';
+      btnMatchNewRound.style.display = 'inline-block';
+    } else {
+      matchStatus.textContent = '딱 맞아요! 🎉';
+    }
+  } else {
+    emojiPick.el.classList.add('wrong');
+    wordPick.el.classList.add('wrong');
+    playEncourageChime();
+    matchStatus.textContent = '다시 생각해볼까요?';
+    setTimeout(() => {
+      emojiPick.el.classList.remove('selected', 'wrong');
+      wordPick.el.classList.remove('selected', 'wrong');
+    }, 500);
+  }
+}
+
+btnMatchBack.addEventListener('click', () => {
+  matchScreen.style.display = 'none';
+  stageMenu.style.display = 'flex';
+  renderMenu();
+});
+btnMatchNewRound.addEventListener('click', startMatchRound);
 
 function showError(msg) {
   errorBox.textContent = msg;
