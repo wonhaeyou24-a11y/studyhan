@@ -59,7 +59,7 @@
   .trace-guide {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 900; white-space: nowrap;
+    font-weight: 700; white-space: nowrap;
     color: rgba(0,0,0,0.18);
     pointer-events: none;
   }
@@ -729,7 +729,7 @@ function drawGuideMask(char) {
   guideMaskCtx.textAlign = 'center';
   guideMaskCtx.textBaseline = 'middle';
   const fontSize = traceCanvasFontSizeFor(char);
-  guideMaskCtx.font = `900 ${fontSize}px -apple-system, sans-serif`;
+  guideMaskCtx.font = `700 ${fontSize}px -apple-system, sans-serif`;
   guideMaskCtx.fillText(char, CANVAS_SIZE / 2, CANVAS_SIZE / 2 + 6);
 }
 
@@ -959,20 +959,10 @@ function speak(text, rate = 0.9, pitch = 1.05, lang = 'ko-KR') {
   });
 }
 
-const GUIDE_PHRASE = {
-  'ko-KR': { repeat: '따라 해보세요', read: '따라 읽어보세요' },
-  'en-US': { repeat: 'Repeat after me', read: 'Repeat after me' },
-  'ja-JP': { repeat: 'まねして言ってみてください', read: 'まねして言ってみてください' },
-};
-
 btnListen.addEventListener('click', async () => {
   const item = currentQueue[idx];
   const lang = currentStage.lang || 'ko-KR';
-  await speak(item.char, 0.9, 1.05, lang);
-  await new Promise(r => setTimeout(r, 800)); // 발음과 안내 음성 사이 간격(0.8초)
-  const phrase = GUIDE_PHRASE[lang] || GUIDE_PHRASE['ko-KR'];
-  const guide = currentStage.type === 'read' ? phrase.read : phrase.repeat;
-  await speak(guide, 0.95, 1.05, lang);
+  await speak(item.char, 0.72, 1.05, lang);
 });
 
 // ===== 2. 효과음 (Web Audio API로 즉석 생성 - 칭찬 징글 / 격려 사운드) =====
