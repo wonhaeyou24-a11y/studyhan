@@ -168,10 +168,16 @@
     font-weight: bold; padding: 4px; text-align: center; word-break: keep-all;
     min-width: 0; min-height: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   }
-  .memory-card .memory-face-back { font-size: clamp(18px, 4.5vh, 32px); }
+  .memory-card .memory-face-back { font-size: clamp(24px, 6vh, 42px); }
   .memory-card.flipped { background: white; color: #333; border-color: #118ab2; cursor: default; }
-  .memory-card.flipped.emoji-face { font-size: clamp(24px, 6.5vh, 46px); }
-  .memory-card.flipped.word-face { font-size: clamp(12px, 2.4vh, 18px); }
+  .memory-card.flipped.emoji-face { font-size: clamp(34px, 9.5vh, 64px); }
+  .memory-card.flipped.word-face {
+    /* 실제 폰트 크기는 JS(memoryWordFontSize)가 글자 수/카드 크기에 맞춰 인라인으로 정함 */
+    line-height: 1.15;
+    /* 카드마다 단어가 하나뿐이라 keep-all(구절 안 끊기)이 필요없고,
+       오히려 긴 단어(7글자 등)가 줄바꿈 없이 카드 밖으로 넘치게 만들어서 해제함 */
+    word-break: normal; overflow-wrap: break-word;
+  }
   .memory-card.matched { background: #d3f9e6; border-color: #06d6a0; opacity: 0.6; cursor: default; }
   .memory-card.wrong { animation: match-shake 0.3s; }
   button {
@@ -1224,12 +1230,27 @@ let memoryMatchedCount = 0;
 let memoryTotalPairs = 0;
 let memoryLocked = false; // 두 장 비교하는 짧은 시간 동안 추가 클릭 막기
 
+// 카드가 정사각형이라 글자 수가 많은 단어(예: "크리스마스트리")는 고정 폰트
+// 크기로 두면 카드 밖으로 넘침 -> 글자 수에 따라 크기를 줄이고, 4글자를
+// 넘으면 두 줄로 감싸진다고 보고 그에 맞춰 더 줄임
+function memoryWordFontSize(text, cardSize) {
+  const usableBox = cardSize * 0.86;
+  const n = text.length;
+  if (n <= 4) return fitFontSizeFor(text, usableBox);
+  const perLine = Math.ceil(n / 2);
+  return Math.round(fitFontSizeFor('x'.repeat(perLine), usableBox) * 0.85);
+}
 function flipCardUp(btn, card) {
   btn.classList.add('flipped', card.type === 'emoji' ? 'emoji-face' : 'word-face');
   btn.textContent = card.face;
+  if (card.type === 'word') {
+    const cardSize = btn.clientWidth || 100;
+    btn.style.fontSize = memoryWordFontSize(card.face, cardSize) + 'px';
+  }
 }
 function flipCardDown(btn) {
   btn.classList.remove('flipped', 'wrong', 'emoji-face', 'word-face');
+  btn.style.fontSize = '';
   btn.innerHTML = '<span class="memory-face-back">❓</span>';
 }
 
