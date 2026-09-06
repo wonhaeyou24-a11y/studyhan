@@ -128,7 +128,7 @@
   #btnMatchNewRound, #btnMatchBack { flex-shrink: 0; white-space: nowrap; }
   .match-status { font-size: clamp(14px, 2.6vh, 20px); color: #666; margin: clamp(6px, 1.5vh, 14px) 0; min-height: 1.4em; }
   .match-board {
-    display: flex; gap: clamp(14px, 4vw, 48px); width: 100%; max-width: 640px;
+    display: flex; gap: clamp(14px, 4vw, 48px); width: 100%; max-width: 900px;
     flex: 1; min-height: 0;
   }
   .match-col { flex: 1; display: flex; flex-direction: column; gap: clamp(8px, 1.6vh, 14px); min-height: 0; min-width: 0; }
@@ -140,8 +140,8 @@
     display: flex; align-items: center; justify-content: center;
     text-align: center; word-break: keep-all;
   }
-  .match-card.emoji-card { font-size: clamp(24px, 6vh, 46px); }
-  .match-card.word-card { font-size: clamp(13px, 2.4vh, 20px); }
+  .match-card.emoji-card { font-size: clamp(32px, 9vh, 68px); }
+  .match-card.word-card { font-size: clamp(16px, 3.4vh, 30px); }
   .match-card.selected { border-color: #118ab2; }
   .match-card.correct { background: #d3f9e6; border-color: #06d6a0; opacity: 0.55; pointer-events: none; }
   .match-card.wrong { background: #ffe3e3; border-color: #ef476f; animation: match-shake 0.3s; }
@@ -1135,6 +1135,7 @@ function sizeTraceBox() {
   if (currentQueue[idx]) {
     const text = currentQueue[idx].char;
     charDisplay.style.fontSize = fitFontSizeFor(text, size * 0.62) + 'px';
+    itemEmoji.style.fontSize = Math.round(size * 0.46) + 'px';
     if (!currentStage.pictureWriting) {
       traceGuide.style.fontSize = traceFontSizeFor(text) + 'px';
     }
@@ -1150,6 +1151,7 @@ function renderItem() {
   charDisplay.textContent = text;
   charDisplay.style.fontSize = currentStage.type === 'read' ? '38px' : fitFontSizeFor(text, currentBoxSize * 0.62) + 'px';
   charDisplay.classList.toggle('hidden', !!currentStage.pictureWriting);
+  itemEmoji.style.fontSize = Math.round(currentBoxSize * 0.46) + 'px';
 
   if (currentStage.pictureWriting) {
     // 그림보고 쓰기 모드: 그림은 항상 보여주고, 정답 글자는 버튼을 눌러야 보임
@@ -1252,6 +1254,7 @@ function playEncourageChime() {
 
 // ===== 4. 리액션 화면 (이미지 + 음성 + 효과음) =====
 let pendingLevelUp = false;
+let reactionAutoAdvanceTimer = null;
 
 async function showReaction(isCorrect) {
   reactionOverlay.classList.add('show');
@@ -1290,9 +1293,15 @@ async function showReaction(isCorrect) {
     const missedItem = currentQueue[idx];
     reviewMap.set(missedItem.char, missedItem);
   }
+
+  // 반응(정답/오답 이미지+소리+음성)이 다 끝나면 "다음으로" 버튼을 안 눌러도
+  // 잠시 후 자동으로 다음 문제로 넘어감 (더 빨리 넘어가고 싶으면 버튼을 눌러도 됨)
+  clearTimeout(reactionAutoAdvanceTimer);
+  reactionAutoAdvanceTimer = setTimeout(proceedAfterReaction, 1400);
 }
 
-btnNext.addEventListener('click', () => {
+function proceedAfterReaction() {
+  clearTimeout(reactionAutoAdvanceTimer);
   reactionOverlay.classList.remove('show');
   if (pendingLevelUp) {
     pendingLevelUp = false;
@@ -1303,7 +1312,9 @@ btnNext.addEventListener('click', () => {
     return; // 레벨업 화면에서 "계속하기"를 눌러야 다음 문제로 넘어감
   }
   goToNextItem();
-});
+}
+
+btnNext.addEventListener('click', proceedAfterReaction);
 
 btnLevelupClose.addEventListener('click', () => {
   levelupOverlay.classList.remove('show');
