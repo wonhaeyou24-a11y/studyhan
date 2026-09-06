@@ -739,12 +739,15 @@ function getDailyState(stage) {
   const totalChunks = Math.max(1, Math.ceil(stage.items.length / DAILY_CHUNK_SIZE));
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(key)); } catch (e) { saved = null; }
+  // 저장된 chunk 값이 숫자가 아니면(예: 예전 버전의 다른 저장 형식이 남아있는 경우)
+  // NaN이 되어 항목이 통째로 사라지므로, 유효한 정수인지 검증 후 아니면 0으로 되돌림
+  const hasValidChunk = saved && Number.isInteger(saved.chunk) && saved.chunk >= 0;
   let chunk, correctChars;
-  if (saved && saved.date === today) {
+  if (saved && saved.date === today && hasValidChunk) {
     chunk = saved.chunk % totalChunks;
-    correctChars = saved.correctChars || [];
+    correctChars = Array.isArray(saved.correctChars) ? saved.correctChars : [];
   } else {
-    chunk = saved ? (saved.chunk + 1) % totalChunks : 0;
+    chunk = hasValidChunk ? (saved.chunk + 1) % totalChunks : 0;
     correctChars = [];
     try { localStorage.setItem(key, JSON.stringify({ date: today, chunk, correctChars })); } catch (e) {}
   }
@@ -985,7 +988,7 @@ const CANVAS_SIZE = 320; // 내부 해상도 (CSS로 반응형 표시)
 inkCanvas.width = CANVAS_SIZE;
 inkCanvas.height = CANVAS_SIZE;
 const inkCtx = inkCanvas.getContext('2d');
-inkCtx.lineWidth = 22;
+inkCtx.lineWidth = 16;
 inkCtx.lineCap = 'round';
 inkCtx.lineJoin = 'round';
 inkCtx.strokeStyle = '#2f6fed';
@@ -1077,7 +1080,7 @@ function computeCoverage() {
   return total === 0 ? 0 : matched / total;
 }
 
-const PASS_THRESHOLD = 0.45; // 45% 이상 겹치면 정답 처리 (관대한 기준)
+const PASS_THRESHOLD = 0.85; // 85% 이상 겹치면 정답 처리
 
 btnSubmit.addEventListener('click', () => {
   clearError();
