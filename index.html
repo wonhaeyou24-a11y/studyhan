@@ -251,8 +251,9 @@
     padding: 10px 18px; border-radius: 16px; box-shadow: none; min-width: auto; display: none;
   }
   .menu-back-btn.show { display: inline-block; }
+  .menu-header-actions { position: absolute; right: 0; display: flex; gap: 8px; }
   .menu-backup-btn {
-    position: absolute; right: 0; background: #f0f0f0; color: #666; font-size: 20px;
+    background: #f0f0f0; color: #666; font-size: 20px;
     padding: 10px 14px; border-radius: 16px; box-shadow: none; min-width: auto;
   }
   .streak-badge {
@@ -279,6 +280,33 @@
   .btn-backup-close {
     background: #eee; color: #666; box-shadow: none; margin-top: 8px;
     font-size: clamp(13px, 2vh, 16px); padding: 8px 20px; min-width: auto;
+  }
+
+  .report-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    display: none; align-items: center; justify-content: center; z-index: 13;
+  }
+  .report-overlay.show { display: flex; }
+  .report-card {
+    background: white; border-radius: 28px; padding: 24px; width: 92vw; max-width: 480px;
+    max-height: 86vh; display: flex; flex-direction: column;
+  }
+  .report-card h2 { margin: 0 0 12px; text-align: center; font-size: clamp(18px, 3vh, 24px); color: #444; flex: 0 0 auto; }
+  .report-body { overflow-y: auto; flex: 1; min-height: 0; }
+  .report-summary {
+    background: #fff8e6; border-radius: 16px; padding: 14px 16px; margin-bottom: 16px;
+    font-size: clamp(13px, 2vh, 16px); color: #555; line-height: 1.7;
+  }
+  .report-group-title { font-weight: bold; color: #118ab2; margin: 14px 0 6px; font-size: clamp(13px, 2vh, 15px); }
+  .report-row {
+    display: flex; justify-content: space-between; gap: 10px; padding: 7px 0;
+    border-bottom: 1px solid #f0f0f0; font-size: clamp(12px, 1.9vh, 14.5px); color: #555;
+  }
+  .report-row .name { color: #333; font-weight: bold; flex-shrink: 0; }
+  .report-row .detail { color: #888; text-align: right; }
+  .btn-report-close {
+    background: #eee; color: #666; box-shadow: none; margin-top: 14px;
+    font-size: clamp(13px, 2vh, 16px); padding: 8px 20px; min-width: auto; align-self: center; flex: 0 0 auto;
   }
 
   /* 카테고리 선택 (한글/영어/일어학습) */
@@ -352,7 +380,10 @@
   <div class="menu-header">
     <button class="menu-back-btn" id="btnMenuBack">◀</button>
     <h1 id="menuTitle">📚 한글공부 시작하기</h1>
-    <button class="menu-backup-btn" id="btnBackupOpen" title="진도 저장/불러오기">💾</button>
+    <div class="menu-header-actions">
+      <button class="menu-backup-btn" id="btnReportOpen" title="학습 리포트">📊</button>
+      <button class="menu-backup-btn" id="btnBackupOpen" title="진도 저장/불러오기">💾</button>
+    </div>
   </div>
   <div class="streak-badge" id="streakBadge" style="display:none;"></div>
   <div id="stageList"></div>
@@ -369,6 +400,14 @@
     <p class="backup-status" id="backupStatus"></p>
     <input type="file" id="backupFileInput" accept="application/json" style="display:none;">
     <button class="btn-backup-close" id="btnBackupClose">닫기</button>
+  </div>
+</div>
+
+<div class="report-overlay" id="reportOverlay">
+  <div class="report-card">
+    <h2>📊 학습 리포트</h2>
+    <div class="report-body" id="reportBody"></div>
+    <button class="btn-report-close" id="btnReportClose">닫기</button>
   </div>
 </div>
 
@@ -711,6 +750,46 @@ function renderStreakBadge() {
   }
 }
 
+// ===== 부모용 학습 리포트 =====
+// 단어 단계는 오늘의 진도(dailyProgress_*)를, 그 외 단계는 완료 횟수(stageStats)를
+// 보여줌 - 두 데이터는 화면에 진입할 때(renderReport)만 읽어서 항상 최신 상태로 표시
+function formatStageStatusLine(stage) {
+  if (DAILY_WORD_STAGES.includes(stage.id)) {
+    const state = getDailyState(stage);
+    return `${state.chunk + 1}/${state.totalChunks}묶음 · 오늘 ${state.correctChars.length}/${state.items.length}`;
+  }
+  const stats = loadStageStats()[stage.id];
+  if (!stats) return '아직 학습 전이에요';
+  return `총 ${stats.timesCompleted}판 완료 · 최근 ${stats.lastDate}`;
+}
+function renderReport() {
+  const streak = getDisplayStreak();
+  const streakState = loadStreakData();
+  let html = '';
+  html += '<div class="report-summary">';
+  html += `🌱 성장 단계: <b>${GROWTH_LABELS[currentLevel - 1]}</b> (누적 정답 ${correctCount}개)<br>`;
+  html += `🔥 연속 학습: <b>${streak}일</b> (최고 기록 ${streakState.bestStreak}일)`;
+  html += '</div>';
+  GROUPS.forEach((group) => {
+    const stages = STAGES.filter((s) => s.group === group.id);
+    if (!stages.length) return;
+    html += `<div class="report-group-title">${group.emoji} ${group.title}</div>`;
+    stages.forEach((stage) => {
+      html += `<div class="report-row"><span class="name">${stage.label}</span><span class="detail">${formatStageStatusLine(stage)}</span></div>`;
+    });
+  });
+  reportBody.innerHTML = html;
+}
+const reportOverlay = document.getElementById('reportOverlay');
+const reportBody = document.getElementById('reportBody');
+document.getElementById('btnReportOpen').addEventListener('click', () => {
+  renderReport();
+  reportOverlay.classList.add('show');
+});
+document.getElementById('btnReportClose').addEventListener('click', () => {
+  reportOverlay.classList.remove('show');
+});
+
 // ===== 단계 선택 화면 (카테고리 → 단계 목록, 2단계 네비게이션) =====
 const GROUPS = [
   { id: 'ko', emoji: '가', title: '한글학습' },
@@ -1006,6 +1085,8 @@ function checkMatchPair() {
       matchStatus.textContent = '';
       matchComplete.style.display = 'block';
       btnMatchNewRound.style.display = 'inline-block';
+      recordStageCompletion(currentStage);
+      recordActivityForStreak(); // 게임만 했어도 오늘 학습한 걸로 인정
     } else {
       matchStatus.textContent = '딱 맞아요! 🎉';
     }
@@ -1077,10 +1158,27 @@ function saveGrowthProgress() {
   try { localStorage.setItem(GROWTH_KEY, JSON.stringify({ currentLevel, correctCount })); } catch (e) {}
 }
 
+// ===== 단계별 학습 현황 (부모용 리포트에 쓰임) =====
+// 단어 단계는 dailyProgress_*로 이미 진도가 남지만, 자음/모음/가나다/문장/게임
+// 단계는 지금까지 완료 기록이 전혀 안 남았음 -> 판을 한 번 다 끝낼 때마다
+// (복습까지 포함해서) 몇 번 완료했는지, 마지막으로 언제 했는지를 기록함
+const STAGE_STATS_KEY = 'stageStats';
+function loadStageStats() {
+  try { return JSON.parse(localStorage.getItem(STAGE_STATS_KEY)) || {}; } catch (e) { return {}; }
+}
+function recordStageCompletion(stage) {
+  const stats = loadStageStats();
+  const entry = stats[stage.id] || { lastDate: null, timesCompleted: 0 };
+  entry.timesCompleted += 1;
+  entry.lastDate = todayISO();
+  stats[stage.id] = entry;
+  try { localStorage.setItem(STAGE_STATS_KEY, JSON.stringify(stats)); } catch (e) {}
+}
+
 // ===== 진도 백업 (파일로 저장 / 파일에서 불러오기) =====
 // 진도가 이 기기의 localStorage에만 있어서, 기기를 바꾸거나 브라우저 저장공간이
 // 지워지면 그대로 사라짐 -> 부모가 파일 하나로 내보내고 다시 불러올 수 있게 함
-const BACKUP_KEYS = [...DAILY_WORD_STAGES.map((id) => 'dailyProgress_' + id), GROWTH_KEY, STREAK_KEY];
+const BACKUP_KEYS = [...DAILY_WORD_STAGES.map((id) => 'dailyProgress_' + id), GROWTH_KEY, STREAK_KEY, STAGE_STATS_KEY];
 
 function collectBackupData() {
   const data = {};
@@ -1579,6 +1677,7 @@ function goToNextItem() {
       reviewMap = new Map(); // 이번 복습 판에서 새로 틀리는 것들을 다시 기록하기 위해 초기화
       mode = 'review';
     } else {
+      recordStageCompletion(currentStage); // 오답 복습까지 끝내고 새 판을 시작하는 시점 = 한 판 완료
       currentQueue = pickRoundItems(currentStage);
       mode = 'normal';
     }
