@@ -310,8 +310,8 @@
 </head>
 <body>
 <div class="intro-screen" id="introScreen">
-  <video id="introVideo" src="intro.mov" autoplay muted playsinline></video>
-  <div class="intro-skip-hint">화면을 터치하면 넘어가요</div>
+  <video id="introVideo" src="intro.mov" playsinline></video>
+  <div class="intro-skip-hint" id="introHint">화면을 터치하면 넘어가요</div>
 </div>
 <div class="stage-menu" id="stageMenu">
   <div class="menu-header">
@@ -679,21 +679,43 @@ btnMenuBack.addEventListener('click', () => {
 renderMenu();
 
 // ===== 시작 인트로 영상 =====
-// 앱을 열면 영상이 자동으로(음소거 상태로) 재생되고, 다 보거나 화면을 터치하면
-// 바로 메인 화면(카테고리 목록)으로 넘어감. 자동재생은 브라우저 정책상 음소거일 때만
-// 허용되기 때문에 muted로 재생함.
+// 앱을 열면 영상이 소리와 함께 재생을 시도함. 다 보거나 화면을 터치하면 바로
+// 메인 화면(카테고리 목록)으로 넘어감. 브라우저는 보통 "소리 있는 영상"의
+// 자동재생을 막기 때문에(무음 영상만 자동재생 허용), 자동재생이 막히면 대신
+// "탭해서 시작" 안내로 바꿔서 사용자가 처음 화면을 눌렀을 때 소리와 함께 재생을 시작함
 const introScreen = document.getElementById('introScreen');
 const introVideo = document.getElementById('introVideo');
+const introHint = document.getElementById('introHint');
 let introEnded = false;
+let introStarted = false;
+
 function endIntro() {
   if (introEnded) return;
   introEnded = true;
   introScreen.style.display = 'none';
   introVideo.pause();
 }
+
+introVideo.muted = false;
+introVideo.play().then(() => {
+  introStarted = true;
+}).catch(() => {
+  // 소리 있는 자동재생이 막힌 경우: 탭하면 그때 소리와 함께 재생 시작
+  introStarted = false;
+  introHint.textContent = '🔊 화면을 터치해서 시작해요';
+});
+
 introVideo.addEventListener('ended', endIntro);
 introVideo.addEventListener('error', endIntro); // 영상을 재생할 수 없으면 바로 메인 화면으로
-introScreen.addEventListener('click', endIntro);
+introScreen.addEventListener('click', () => {
+  if (!introStarted) {
+    introStarted = true;
+    introHint.textContent = '화면을 터치하면 넘어가요';
+    introVideo.play().catch(endIntro); // 그래도 재생이 안 되면 바로 메인 화면으로
+    return;
+  }
+  endIntro();
+});
 
 // 자음/모음/가나다/알파벳/히라가나처럼 항목이 적은 "기초" 단계는 처음부터 끝까지
 // 순서대로 한 바퀴 다 연습하고, 다 끝나면(goToNextItem의 복습 로직이) 오답만
