@@ -76,6 +76,8 @@
   }
   .btn-clear { background: #f4f4f4; color: #666; font-size: clamp(13px, 2.2vh, 20px); padding: clamp(6px, 1.4vh, 14px) clamp(10px, 3vw, 26px); }
   .btn-submit { background: #ff9f1c; color: #4a2b00; font-size: clamp(13px, 2.4vh, 24px); padding: clamp(8px, 1.8vh, 18px) clamp(10px, 4vw, 34px); }
+  .btn-self-correct { background: #06d6a0; color: #003d2e; }
+  .btn-self-wrong { background: #ef476f; color: white; }
 
   .top-bar {
     display: flex; align-items: center; justify-content: space-between; gap: clamp(6px, 2vw, 24px);
@@ -295,11 +297,15 @@
     <div class="status" id="statusText">손가락으로 글자를 따라 써보세요</div>
     <div class="error-box" id="errorBox"></div>
 
-    <div class="action-buttons-row">
+    <div class="action-buttons-row" id="actionButtonsRow">
       <button class="btn-clear" id="btnClear">🧹 지우기</button>
       <button class="btn-submit" id="btnSubmit">✅ 다 썼어요!</button>
       <button class="btn-submit" id="btnReadDone" style="display:none;">✅ 다 읽었어요!</button>
       <button class="btn-listen" id="btnListen">🔊 듣기</button>
+    </div>
+    <div class="action-buttons-row" id="selfCheckRow" style="display:none;">
+      <button class="btn-self-correct" id="btnSelfCorrect">⭕ 맞았어요!</button>
+      <button class="btn-self-wrong" id="btnSelfWrong">❌ 틀렸어요</button>
     </div>
     <div class="mic-hint" id="micHint"></div>
 
@@ -509,6 +515,10 @@ const traceGuide = document.getElementById('traceGuide');
 const inkCanvas = document.getElementById('inkCanvas');
 const btnClear = document.getElementById('btnClear');
 const btnSubmit = document.getElementById('btnSubmit');
+const actionButtonsRow = document.getElementById('actionButtonsRow');
+const selfCheckRow = document.getElementById('selfCheckRow');
+const btnSelfCorrect = document.getElementById('btnSelfCorrect');
+const btnSelfWrong = document.getElementById('btnSelfWrong');
 const traceWrap = document.getElementById('traceWrap');
 const btnReadDone = document.getElementById('btnReadDone');
 const stageMenu = document.getElementById('stageMenu');
@@ -624,6 +634,8 @@ function startStage(stage) {
   idx = 0;
   roundStickers = new Array(currentQueue.length).fill(null);
   btnHint.textContent = stage.pictureWriting ? '🔍 정답 보기' : '🔍 그림 힌트 보기';
+  actionButtonsRow.style.display = 'flex';
+  selfCheckRow.style.display = 'none';
 
   // 학습 타입에 따라 따라쓰기 화면 / 읽기 화면 전환
   const isTrace = stage.type === 'trace';
@@ -738,6 +750,10 @@ function clearInk() {
 }
 
 let drawing = false;
+// 손가락(또는 손바닥)이 동시에 두 개 이상 캔버스에 닿으면, 두 접촉점의 좌표를
+// 번갈아 그리면서 선이 튀는 문제가 있었음 -> 맨 처음 닿은 손가락 하나만 추적하고
+// 다른 접촉점은 그 손가락을 뗄 때까지 무시함
+let activePointerId = null;
 function getPos(e) {
   const rect = inkCanvas.getBoundingClientRect();
   const scaleX = CANVAS_SIZE / rect.width;
@@ -745,6 +761,8 @@ function getPos(e) {
   return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
 }
 inkCanvas.addEventListener('pointerdown', (e) => {
+  if (activePointerId !== null) return; // 이미 그리고 있으면 추가 접촉점은 무시
+  activePointerId = e.pointerId;
   drawing = true;
   const p = getPos(e);
   inkCtx.beginPath();
@@ -752,12 +770,16 @@ inkCanvas.addEventListener('pointerdown', (e) => {
   inkCanvas.setPointerCapture(e.pointerId);
 });
 inkCanvas.addEventListener('pointermove', (e) => {
-  if (!drawing) return;
+  if (!drawing || e.pointerId !== activePointerId) return;
   const p = getPos(e);
   inkCtx.lineTo(p.x, p.y);
   inkCtx.stroke();
 });
-function stopDrawing() { drawing = false; }
+function stopDrawing(e) {
+  if (e && e.pointerId !== activePointerId) return;
+  drawing = false;
+  activePointerId = null;
+}
 inkCanvas.addEventListener('pointerup', stopDrawing);
 inkCanvas.addEventListener('pointercancel', stopDrawing);
 inkCanvas.addEventListener('pointerleave', stopDrawing);
@@ -803,8 +825,32 @@ btnSubmit.addEventListener('click', () => {
     showError('아직 쓰지 않았어요! 손가락으로 먼저 따라 써볼까요?');
     return;
   }
+  if (currentStage.pictureWriting) {
+    // 그림보고 쓰기: 자동 채점 대신 정답을 보여주고 스스로 맞았는지 판단하게 함
+    const text = currentQueue[idx].char;
+    charDisplay.classList.remove('hidden');
+    btnHint.classList.remove('show');
+    traceGuide.classList.remove('hidden');
+    traceGuide.textContent = text;
+    traceGuide.style.fontSize = traceFontSizeFor(text) + 'px';
+    statusText.textContent = '내가 쓴 글자와 정답을 비교해보세요!';
+    actionButtonsRow.style.display = 'none';
+    selfCheckRow.style.display = 'flex';
+    return;
+  }
   const coverage = computeCoverage();
   showReaction(coverage >= PASS_THRESHOLD);
+});
+
+btnSelfCorrect.addEventListener('click', () => {
+  selfCheckRow.style.display = 'none';
+  actionButtonsRow.style.display = 'flex';
+  showReaction(true);
+});
+btnSelfWrong.addEventListener('click', () => {
+  selfCheckRow.style.display = 'none';
+  actionButtonsRow.style.display = 'flex';
+  showReaction(false);
 });
 
 // 문장(읽기) 단계: 손으로 쓰지 않으므로 스스로 "다 읽었다"고 표시하면 정답 처리
