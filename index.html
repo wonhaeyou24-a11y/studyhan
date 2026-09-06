@@ -1054,7 +1054,7 @@ btnSelfWrong.addEventListener('click', () => {
   showReaction(false);
 });
 
-// 문장(읽기) 단계: 손으로 쓰지 않으므로 스스로 "다 읽었다"고 표시하면 정답 처리
+// 힌트 버튼: 그림보고 쓰기 모드는 정답 글자를, 그 외는 그림을 보여줌
 btnHint.addEventListener('click', () => {
   if (currentStage.pictureWriting) {
     charDisplay.classList.remove('hidden');
@@ -1064,6 +1064,7 @@ btnHint.addEventListener('click', () => {
   btnHint.classList.remove('show');
 });
 
+// 문장(읽기) 단계: 손으로 쓰지 않으므로 스스로 "다 읽었다"고 표시하면 정답 처리
 btnReadDone.addEventListener('click', () => {
   clearError();
   showReaction(true);
