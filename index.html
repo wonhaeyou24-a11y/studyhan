@@ -64,10 +64,10 @@
   .trace-guide.hidden { display: none; }
   #inkCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   .stroke-order-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .stroke-order-svg .stroke-body { fill: none; stroke: #cfd3d8; stroke-width: 13; stroke-linecap: round; stroke-linejoin: round; }
-  .stroke-order-svg .stroke-path { fill: none; stroke: #4fa8e8; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 5 4; }
+  .stroke-order-svg .stroke-body { fill: none; stroke: #cfd3d8; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+  .stroke-order-svg .stroke-path { fill: none; stroke: #4fa8e8; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 3.5 3; }
   .stroke-order-svg .stroke-num-bg { fill: #4fa8e8; }
-  .stroke-order-svg .stroke-num-text { fill: white; font-size: 9px; font-weight: 900; text-anchor: middle; dominant-baseline: central; }
+  .stroke-order-svg .stroke-num-text { fill: white; font-size: 6px; font-weight: 900; text-anchor: middle; dominant-baseline: central; }
   .controls-footer {
     display: flex; flex-direction: column; align-items: center;
     margin-top: auto; padding-top: clamp(6px, 1.6vh, 16px); padding-bottom: clamp(10px, 2.4vh, 22px);
@@ -77,8 +77,8 @@
     display: flex; gap: clamp(8px, 2vw, 20px); flex-wrap: wrap; justify-content: center;
     margin-bottom: clamp(4px, 1vh, 12px);
   }
-  .btn-clear { background: #f4f4f4; color: #666; font-size: clamp(13px, 2.2vh, 20px); padding: clamp(6px, 1.4vh, 14px) clamp(14px, 3vw, 26px); }
-  .btn-submit { background: #ff9f1c; color: #4a2b00; font-size: clamp(14px, 2.4vh, 24px); padding: clamp(8px, 1.8vh, 18px) clamp(18px, 4vw, 34px); }
+  .btn-clear { background: #f4f4f4; color: #666; font-size: clamp(13px, 2.2vh, 20px); padding: clamp(6px, 1.4vh, 14px) clamp(10px, 3vw, 26px); }
+  .btn-submit { background: #ff9f1c; color: #4a2b00; font-size: clamp(13px, 2.4vh, 24px); padding: clamp(8px, 1.8vh, 18px) clamp(10px, 4vw, 34px); }
 
   .top-bar {
     display: flex; align-items: center; justify-content: space-between; gap: clamp(6px, 2vw, 24px);
@@ -122,11 +122,11 @@
   button {
     font-size: clamp(15px, 2.8vh, 32px);
     font-weight: bold;
-    padding: clamp(8px, 1.8vh, 26px) clamp(18px, 5vw, 44px);
+    padding: clamp(8px, 1.8vh, 26px) clamp(12px, 4vw, 44px);
     border-radius: clamp(16px, 3vh, 32px);
     border: none;
     cursor: pointer;
-    min-width: clamp(100px, 25vw, 180px);
+    min-width: clamp(78px, 22vw, 180px);
     box-shadow: 0 6px 0 rgba(0,0,0,0.15);
     transition: transform 0.08s;
     touch-action: manipulation;
@@ -294,7 +294,7 @@
       <canvas id="inkCanvas"></canvas>
       <svg id="strokeOrderSvg" class="stroke-order-svg" viewBox="0 0 100 100">
         <defs>
-          <marker id="strokeArrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <marker id="strokeArrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="3.4" markerHeight="3.4" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="#4fa8e8"></path>
           </marker>
         </defs>
@@ -606,6 +606,7 @@ function startStage(stage) {
   renderStickerBoard();
   renderGrowthBadge();
   renderItem();
+  sizeTraceBox();
 }
 
 btnBackToMenu.addEventListener('click', () => {
@@ -812,6 +813,51 @@ function cardFontSizeFor(text) {
   return Math.round(Math.max(26, 46 - (n - 4) * 4) * s);
 }
 
+// 따라쓰기 박스는 CSS 비율만으로는 넓은 화면에서 남는 공간을 다 못 써서,
+// 실제 남는 공간(세로: 상단바~하단 버튼 사이, 가로: 카드 옆 남는 폭)을 재서
+// 그 안에서 최대한 크게 채움. 화면 크기가 바뀔 때도 다시 계산함.
+function sizeTraceBox() {
+  if (currentStage?.type !== 'trace' || traceWrap.style.display === 'none') return;
+  traceWrap.style.width = '';
+  traceWrap.style.height = '';
+  // 아래에서 getBoundingClientRect()를 호출하는 순간 브라우저가 레이아웃을 즉시
+  // 다시 계산하므로 requestAnimationFrame 없이 바로 최신 크기를 읽을 수 있음
+  const run = () => {
+    const topBarEl = document.querySelector('.top-bar');
+    const cardEl = document.querySelector('.card');
+    if (!topBarEl || !cardEl) return;
+    const topBarH = topBarEl.getBoundingClientRect().height;
+    const progressH = progress.getBoundingClientRect().height;
+    const footerH = document.getElementById('controlsFooter').getBoundingClientRect().height;
+    const appPadding = parseFloat(getComputedStyle(learnScreen).paddingTop) * 2;
+    const rowMargin = 30; // practice-row 위아래 margin 대략치
+    const availH = learnScreen.clientHeight - topBarH - progressH - footerH - appPadding - rowMargin;
+
+    const cardRect = cardEl.getBoundingClientRect();
+    const traceRect = traceWrap.getBoundingClientRect();
+    const sameRow = Math.abs(cardRect.top - traceRect.top) < 5;
+    const sidePadding = parseFloat(getComputedStyle(learnScreen).paddingLeft) * 2;
+    const availW = sameRow
+      ? learnScreen.clientWidth - cardRect.width - 32 - sidePadding
+      : learnScreen.clientWidth - sidePadding;
+    // 세로로 쌓인 화면(좁은 폰)에서는 카드가 따라쓰기 박스 위에 따로 자리를 차지하니
+    // 그만큼은 세로 여유 공간에서 미리 빼야 함
+    const availHForTrace = sameRow ? availH : availH - cardRect.height - 16;
+
+    const size = Math.max(160, Math.min(availHForTrace, availW, 640));
+    traceWrap.style.width = size + 'px';
+    traceWrap.style.height = size + 'px';
+    if (currentQueue[idx]) {
+      const text = currentQueue[idx].char;
+      traceGuide.style.fontSize = traceFontSizeFor(text) + 'px';
+      drawGuideMask(text);
+      renderStrokeOrder(text);
+    }
+  };
+  run();
+}
+window.addEventListener('resize', sizeTraceBox);
+
 // ===== 획순 안내 (자음/모음만 제공) =====
 // 좌표는 0~100 기준 (박스 크기에 맞춰 자동으로 늘어남). 선 획은 [x,y] 점들의 배열,
 // 동그라미 획(ㅇ, ㅎ의 아래 원)은 {circle:[cx,cy,r]}로 표현.
@@ -914,7 +960,7 @@ function renderStrokeOrder(char) {
       const [x1, y1] = stroke[1];
       const dx = x1 - x0, dy = y1 - y0;
       const len = Math.hypot(dx, dy) || 1;
-      const off = Math.min(9, len * 0.35);
+      const off = Math.min(7, len * 0.32);
       startX = x0 + (dx / len) * off;
       startY = y0 + (dy / len) * off;
     }
@@ -934,7 +980,7 @@ function renderStrokeOrder(char) {
 }
 function addStrokeNumber(g, x, y, num) {
   const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  bg.setAttribute('cx', x); bg.setAttribute('cy', y); bg.setAttribute('r', 6);
+  bg.setAttribute('cx', x); bg.setAttribute('cy', y); bg.setAttribute('r', 4.2);
   bg.setAttribute('class', 'stroke-num-bg');
   const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   label.setAttribute('x', x); label.setAttribute('y', y);
