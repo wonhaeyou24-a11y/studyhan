@@ -180,6 +180,32 @@
   }
   .memory-card.matched { background: #d3f9e6; border-color: #06d6a0; opacity: 0.6; cursor: default; }
   .memory-card.wrong { animation: match-shake 0.3s; }
+
+  /* ===== 글자 순서 맞추기(음운 분절·합성) 미니게임 ===== */
+  .syllable-emoji { font-size: clamp(40px, 9vh, 76px); margin: clamp(4px, 1.2vh, 12px) 0; }
+  .syllable-slots {
+    display: flex; gap: clamp(8px, 2vw, 16px); justify-content: center; flex-wrap: wrap;
+    margin: clamp(12px, 2.4vh, 24px) 0; transition: transform 0.05s; position: relative;
+  }
+  .syllable-slots.shake { animation: match-shake 0.3s; }
+  .syllable-slot {
+    width: clamp(56px, 13vw, 92px); height: clamp(56px, 13vw, 92px);
+    border: 3px dashed #dcdcdc; border-radius: 16px; background: #fafafa;
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(24px, 6vh, 42px); font-weight: 900; color: #333;
+  }
+  .syllable-slot.filled { border-style: solid; border-color: #118ab2; background: white; }
+  .syllable-tiles { display: flex; gap: clamp(8px, 2vw, 16px); justify-content: center; flex-wrap: wrap; }
+  .syllable-tile {
+    width: clamp(56px, 13vw, 92px); height: clamp(56px, 13vw, 92px);
+    border-radius: 16px; border: none; background: #ffd166; color: #5a3d00;
+    font-size: clamp(24px, 6vh, 42px); font-weight: 900; position: relative;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.15); min-width: auto; padding: 0;
+  }
+  .syllable-tile.used { visibility: hidden; }
+  .syllable-tile .tile-hint-num {
+    position: absolute; top: 2px; right: 8px; font-size: 13px; color: #e08a00; font-weight: 900;
+  }
   button {
     font-size: clamp(15px, 2.8vh, 32px);
     font-weight: bold;
@@ -517,6 +543,22 @@
   </div>
 </div>
 
+<div class="app match-app" id="syllableScreen" style="display:none;">
+  <div class="top-bar">
+    <button class="back-btn" id="btnSyllableBack">🏠 목록으로</button>
+    <div class="match-title" id="syllableTitle">글자 순서 맞추기</div>
+    <button class="btn-dev" id="btnSyllableNewRound" style="display:none;">🔄 다음 판</button>
+  </div>
+  <div class="match-status" id="syllableStatus">순서대로 글자를 눌러서 단어를 완성해보세요!</div>
+  <div class="syllable-emoji" id="syllableEmoji"></div>
+  <button class="btn-listen" id="btnSyllableListen">🔊 듣기</button>
+  <div class="syllable-slots" id="syllableSlots"></div>
+  <div class="syllable-tiles" id="syllableTiles"></div>
+  <div class="match-complete" id="syllableComplete" style="display:none;">
+    🎉 모두 맞췄어요!
+  </div>
+</div>
+
 <div class="reaction-overlay" id="reactionOverlay">
   <div class="reaction-card">
     <img id="reactionImg" src="" alt="reaction">
@@ -735,6 +777,13 @@ STAGES.push(
   { id: 'memory-ja', label: '기억력 카드 뒤집기 (일본어)', group: 'game', type: 'memory', lang: 'ja-JP', items: STAGES.find((s) => s.id === 'ja-words').items },
 );
 
+// 글자 순서 맞추기(음운 분절·합성): 단어를 음절 단위로 쪼갠 조각을 뒤섞어 보여주고
+// 원래 순서대로 눌러서 다시 맞추게 함 - "사과"가 "사"+"과"로 이루어져 있다는
+// 음절 감각을 직접 만져보며 익히게 하는 게 목적
+STAGES.push(
+  { id: 'syllable-ko', label: '글자 순서 맞추기', group: 'game', type: 'syllable', lang: 'ko-KR', items: STAGES.find((s) => s.id === 'words').items.filter((w) => w.char.length >= 2 && w.char.length <= 4) },
+);
+
 let currentStage = null;
 let currentQueue = [];
 let mode = 'normal'; // 'normal' | 'review'
@@ -784,6 +833,16 @@ const memoryBoard = document.getElementById('memoryBoard');
 const memoryComplete = document.getElementById('memoryComplete');
 const btnMemoryBack = document.getElementById('btnMemoryBack');
 const btnMemoryNewRound = document.getElementById('btnMemoryNewRound');
+const syllableScreen = document.getElementById('syllableScreen');
+const syllableTitle = document.getElementById('syllableTitle');
+const syllableStatus = document.getElementById('syllableStatus');
+const syllableEmoji = document.getElementById('syllableEmoji');
+const btnSyllableListen = document.getElementById('btnSyllableListen');
+const syllableSlots = document.getElementById('syllableSlots');
+const syllableTiles = document.getElementById('syllableTiles');
+const syllableComplete = document.getElementById('syllableComplete');
+const btnSyllableBack = document.getElementById('btnSyllableBack');
+const btnSyllableNewRound = document.getElementById('btnSyllableNewRound');
 
 // ===== 연속 학습일(스트릭) =====
 // 아무 문제든 하루에 하나라도 맞히면 그날을 "학습한 날"로 기록해서,
@@ -928,6 +987,9 @@ function stageBadgeText(stage) {
   }
   if (stage.type === 'memory') {
     return `한 판 ${MEMORY_ROUND_SIZE}쌍`;
+  }
+  if (stage.type === 'syllable') {
+    return `한 판 ${SYLLABLE_ROUND_SIZE}문제`;
   }
   if (stage.blankFill) {
     return `한 판 ${BLANK_FILL_ROUND_SIZE}문제`;
@@ -1076,6 +1138,12 @@ function startStage(stage) {
     currentStage = stage;
     stageMenu.style.display = 'none';
     startMemoryRound();
+    return;
+  }
+  if (stage.type === 'syllable') {
+    currentStage = stage;
+    stageMenu.style.display = 'none';
+    startSyllableRound();
     return;
   }
   currentStage = stage;
@@ -1344,6 +1412,134 @@ btnMemoryBack.addEventListener('click', () => {
   renderMenu();
 });
 btnMemoryNewRound.addEventListener('click', startMemoryRound);
+
+// ===== 글자 순서 맞추기(음운 분절·합성) 미니게임 =====
+// 단어를 음절 조각으로 쪼개 뒤섞어 보여주고, 원래 순서대로 눌러서 슬롯에
+// 채우게 함. 다 채웠는데 순서가 틀리면 조각을 다시 흩어놓고 재시도시키고,
+// 몇 번 이상 틀리면(SYLLABLE_HINT_THRESHOLD) 조각마다 정답 순서 번호를
+// 보여줘서 힌트를 줌
+const SYLLABLE_ROUND_SIZE = 5;
+const SYLLABLE_HINT_THRESHOLD = 3;
+let syllableQueue = [];
+let syllableIdx = 0;
+let syllablePlaced = []; // 슬롯에 채운 순서대로의 원래 인덱스들
+let syllableWrongAttempts = 0;
+
+function startSyllableRound() {
+  syllableTitle.textContent = currentStage.label;
+  syllableComplete.style.display = 'none';
+  btnSyllableNewRound.style.display = 'none';
+  syllableStatus.textContent = '순서대로 글자를 눌러서 단어를 완성해보세요!';
+  const pool = currentStage.items;
+  syllableQueue = shuffleArray(pool).slice(0, Math.min(SYLLABLE_ROUND_SIZE, pool.length));
+  syllableIdx = 0;
+
+  learnScreen.style.display = 'none';
+  syllableScreen.style.display = 'flex';
+  renderSyllableItem();
+}
+
+function renderSyllableItem() {
+  const item = syllableQueue[syllableIdx];
+  syllableWrongAttempts = 0;
+  syllablePlaced = [];
+  syllableEmoji.textContent = item.emoji || '';
+
+  const chars = item.char.split('');
+  syllableSlots.innerHTML = '';
+  chars.forEach(() => {
+    const slot = document.createElement('div');
+    slot.className = 'syllable-slot';
+    syllableSlots.appendChild(slot);
+  });
+
+  syllableTiles.innerHTML = '';
+  shuffleArray(chars.map((_, i) => i)).forEach((originalIndex) => {
+    const tile = document.createElement('button');
+    tile.className = 'syllable-tile';
+    tile.textContent = chars[originalIndex];
+    tile.dataset.index = originalIndex;
+    tile.addEventListener('click', () => onSyllableTileClick(tile, chars));
+    syllableTiles.appendChild(tile);
+  });
+  applySyllableHint();
+}
+
+function applySyllableHint() {
+  const revealed = syllableWrongAttempts >= SYLLABLE_HINT_THRESHOLD;
+  Array.from(syllableTiles.children).forEach((tile) => {
+    let numEl = tile.querySelector('.tile-hint-num');
+    if (revealed) {
+      if (!numEl) {
+        numEl = document.createElement('span');
+        numEl.className = 'tile-hint-num';
+        tile.appendChild(numEl);
+      }
+      numEl.textContent = String(Number(tile.dataset.index) + 1);
+    } else if (numEl) {
+      numEl.remove();
+    }
+  });
+  if (revealed) {
+    syllableStatus.textContent = '조각에 적힌 숫자 순서대로 눌러보세요!';
+  }
+}
+
+function onSyllableTileClick(tile, chars) {
+  if (tile.classList.contains('used')) return;
+  tile.classList.add('used');
+  syllablePlaced.push(Number(tile.dataset.index));
+  const slot = syllableSlots.children[syllablePlaced.length - 1];
+  slot.textContent = chars[Number(tile.dataset.index)];
+  slot.classList.add('filled');
+  if (syllablePlaced.length === chars.length) {
+    checkSyllableAnswer(chars);
+  }
+}
+
+function checkSyllableAnswer(chars) {
+  const isCorrect = syllablePlaced.every((origIdx, pos) => origIdx === pos);
+  if (isCorrect) {
+    playSuccessJingle();
+    burstConfetti(syllableSlots);
+    syllableStatus.textContent = pickRandom(PRAISE_MESSAGES).text;
+    recordActivityForStreak();
+    setTimeout(() => {
+      syllableIdx++;
+      if (syllableIdx >= syllableQueue.length) {
+        syllableStatus.textContent = '';
+        syllableComplete.style.display = 'block';
+        btnSyllableNewRound.style.display = 'inline-block';
+        recordStageCompletion(currentStage);
+      } else {
+        renderSyllableItem();
+      }
+    }, 1100);
+  } else {
+    playEncourageChime();
+    syllableWrongAttempts++;
+    syllableSlots.classList.add('shake');
+    syllableStatus.textContent = '다시 생각해볼까요?';
+    setTimeout(() => {
+      syllableSlots.classList.remove('shake');
+      syllablePlaced = [];
+      Array.from(syllableSlots.children).forEach((s) => { s.textContent = ''; s.classList.remove('filled'); });
+      Array.from(syllableTiles.children).forEach((t) => t.classList.remove('used'));
+      applySyllableHint();
+    }, 800);
+  }
+}
+
+btnSyllableListen.addEventListener('click', () => {
+  const item = syllableQueue[syllableIdx];
+  if (item) speak(item.char, 0.85, 1.0, currentStage.lang);
+});
+btnSyllableBack.addEventListener('click', () => {
+  syllableScreen.style.display = 'none';
+  stageMenu.style.display = 'flex';
+  renderMenu();
+});
+btnSyllableNewRound.addEventListener('click', startSyllableRound);
 
 function showError(msg) {
   errorBox.textContent = msg;
