@@ -144,8 +144,8 @@
     display: flex; align-items: center; justify-content: center;
     text-align: center; word-break: keep-all;
   }
-  .match-card.emoji-card { font-size: clamp(32px, 9vh, 68px); }
-  .match-card.word-card { font-size: clamp(16px, 3.4vh, 30px); }
+  .match-card.emoji-card { font-size: clamp(36px, min(10vh, 11vw), 100px); }
+  .match-card.word-card { font-size: clamp(18px, min(4.4vh, 4.6vw), 42px); }
   .match-card.selected { border-color: #118ab2; }
   .match-card.correct { background: #d3f9e6; border-color: #06d6a0; opacity: 0.55; pointer-events: none; }
   .match-card.wrong { background: #ffe3e3; border-color: #ef476f; animation: match-shake 0.3s; }
@@ -158,8 +158,8 @@
 
   /* ===== 기억력 카드 뒤집기 미니게임 ===== */
   .memory-board {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(8px, 1.6vh, 14px);
-    width: min(94vw, 640px); flex: 1; min-height: 0; align-content: center;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(10px, 1.8vh, 18px);
+    width: min(94vw, 780px); flex: 1; min-height: 0; align-content: center;
   }
   .memory-card {
     aspect-ratio: 1 / 1; border-radius: 16px; border: 3px solid transparent;
@@ -168,9 +168,9 @@
     font-weight: bold; padding: 4px; text-align: center; word-break: keep-all;
     min-width: 0; min-height: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   }
-  .memory-card .memory-face-back { font-size: clamp(24px, 6vh, 42px); }
+  .memory-card .memory-face-back { font-size: clamp(28px, min(7vh, 8vw), 56px); }
   .memory-card.flipped { background: white; color: #333; border-color: #118ab2; cursor: default; }
-  .memory-card.flipped.emoji-face { font-size: clamp(34px, 9.5vh, 64px); }
+  .memory-card.flipped.emoji-face { font-size: clamp(40px, min(11vh, 12vw), 92px); }
   .memory-card.flipped.word-face {
     /* 실제 폰트 크기는 JS(memoryWordFontSize)가 글자 수/카드 크기에 맞춰 인라인으로 정함 */
     line-height: 1.15;
@@ -182,50 +182,50 @@
   .memory-card.wrong { animation: match-shake 0.3s; }
 
   /* ===== 글자 순서 맞추기(음운 분절·합성) 미니게임 ===== */
-  .syllable-emoji { font-size: clamp(40px, 9vh, 76px); margin: clamp(4px, 1.2vh, 12px) 0; }
+  .syllable-emoji { font-size: clamp(48px, min(14vh, 16vw), 140px); margin: clamp(4px, 1.2vh, 16px) 0; }
   .syllable-slots {
-    display: flex; gap: clamp(8px, 2vw, 16px); justify-content: center; flex-wrap: wrap;
-    margin: clamp(12px, 2.4vh, 24px) 0; transition: transform 0.05s; position: relative;
+    display: flex; gap: clamp(10px, 2.4vw, 22px); justify-content: center; flex-wrap: wrap;
+    margin: clamp(12px, 2.8vh, 32px) 0; transition: transform 0.05s; position: relative;
   }
   .syllable-slots.shake { animation: match-shake 0.3s; }
   .syllable-slot {
-    width: clamp(56px, 13vw, 92px); height: clamp(56px, 13vw, 92px);
-    border: 3px dashed #dcdcdc; border-radius: 16px; background: #fafafa;
+    width: clamp(64px, min(17vh, 19vw), 170px); height: clamp(64px, min(17vh, 19vw), 170px);
+    border: 3px dashed #dcdcdc; border-radius: 20px; background: #fafafa;
     display: flex; align-items: center; justify-content: center;
-    font-size: clamp(24px, 6vh, 42px); font-weight: 900; color: #333;
+    font-size: clamp(28px, min(8vh, 9vw), 84px); font-weight: 900; color: #333;
   }
   .syllable-slot.filled { border-style: solid; border-color: #118ab2; background: white; }
-  .syllable-tiles { display: flex; gap: clamp(8px, 2vw, 16px); justify-content: center; flex-wrap: wrap; }
+  .syllable-tiles { display: flex; gap: clamp(10px, 2.4vw, 22px); justify-content: center; flex-wrap: wrap; }
   .syllable-tile {
-    width: clamp(56px, 13vw, 92px); height: clamp(56px, 13vw, 92px);
-    border-radius: 16px; border: none; background: #ffd166; color: #5a3d00;
-    font-size: clamp(24px, 6vh, 42px); font-weight: 900; position: relative;
+    width: clamp(64px, min(17vh, 19vw), 170px); height: clamp(64px, min(17vh, 19vw), 170px);
+    border-radius: 20px; border: none; background: #ffd166; color: #5a3d00;
+    font-size: clamp(28px, min(8vh, 9vw), 84px); font-weight: 900; position: relative;
     box-shadow: 0 5px 0 rgba(0,0,0,0.15); min-width: auto; padding: 0;
   }
   .syllable-tile.used { visibility: hidden; }
   .syllable-tile .tile-hint-num {
-    position: absolute; top: 2px; right: 8px; font-size: 13px; color: #e08a00; font-weight: 900;
+    position: absolute; top: 4px; right: 10px; font-size: clamp(13px, 2vh, 18px); color: #e08a00; font-weight: 900;
   }
 
   /* ===== 자음+모음 조합 만들기 미니게임 ===== */
-  .combine-target { font-size: clamp(16px, 2.8vh, 20px); color: #777; margin-bottom: clamp(4px, 1vh, 10px); }
+  .combine-target { font-size: clamp(18px, 3.2vh, 26px); color: #777; margin-bottom: clamp(4px, 1.2vh, 12px); }
   .combine-result {
-    font-size: clamp(56px, 14vh, 100px); font-weight: 900; color: #333;
+    font-size: clamp(64px, min(16vh, 18vw), 150px); font-weight: 900; color: #333;
     background: white; border-radius: 24px;
-    width: clamp(96px, 20vw, 150px); height: clamp(96px, 20vw, 150px);
+    width: clamp(110px, min(24vh, 26vw), 220px); height: clamp(110px, min(24vh, 26vw), 220px);
     display: flex; align-items: center; justify-content: center;
-    margin: clamp(8px, 1.6vh, 16px) auto; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin: clamp(8px, 2vh, 24px) auto; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     position: relative; transition: background 0.15s, color 0.15s;
   }
   .combine-result.correct-flash { background: #d3f9e6; color: #06a06a; }
   .combine-result.wrong-flash { background: #ffe3e3; color: #c0392b; animation: match-shake 0.3s; }
   .combine-row {
-    display: flex; flex-wrap: wrap; gap: clamp(6px, 1.4vw, 12px); justify-content: center;
-    margin-bottom: clamp(8px, 1.6vh, 16px); max-width: 640px; margin-left: auto; margin-right: auto;
+    display: flex; flex-wrap: wrap; gap: clamp(8px, 1.8vw, 16px); justify-content: center;
+    margin-bottom: clamp(10px, 2vh, 20px); max-width: 760px; margin-left: auto; margin-right: auto;
   }
   .combine-tile {
-    width: clamp(38px, 8vw, 58px); height: clamp(38px, 8vw, 58px); border-radius: 12px;
-    border: none; font-size: clamp(17px, 3.6vh, 26px); font-weight: bold;
+    width: clamp(44px, min(9vh, 9vw), 76px); height: clamp(44px, min(9vh, 9vw), 76px); border-radius: 14px;
+    border: none; font-size: clamp(19px, min(4.2vh, 4vw), 34px); font-weight: bold;
     background: #eef7ff; color: #118ab2; box-shadow: 0 3px 0 rgba(0,0,0,0.1);
     min-width: auto; padding: 0;
   }
@@ -400,20 +400,20 @@
   }
   .category-card {
     flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: clamp(6px, 1.5vh, 12px); background: white; border-radius: 28px;
+    gap: clamp(14px, 3.2vh, 36px); background: white; border-radius: 28px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: none; cursor: pointer; padding: 12px;
   }
   .category-card .emoji {
-    font-size: clamp(28px, 7vw, 44px); font-weight: 900; color: white;
-    width: clamp(56px, 14vw, 88px); height: clamp(56px, 14vw, 88px); border-radius: 50%;
+    font-size: clamp(32px, min(11vh, 12vw), 84px); font-weight: 900; color: white;
+    width: clamp(64px, min(26vh, 28vw), 190px); height: clamp(64px, min(26vh, 28vw), 190px); border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, #06d6a0, #118ab2);
   }
   .category-card:nth-child(2) .emoji { background: linear-gradient(135deg, #ff9f1c, #ef476f); }
   .category-card:nth-child(3) .emoji { background: linear-gradient(135deg, #a06cd5, #5e60ce); }
   .category-card:nth-child(4) .emoji { background: linear-gradient(135deg, #ffd166, #ff9f1c); }
-  .category-card .title { font-size: clamp(16px, 3.4vw, 24px); font-weight: bold; color: #333; }
-  .category-card .count { font-size: clamp(11px, 2vw, 14px); color: #999; }
+  .category-card .title { font-size: clamp(18px, min(4.4vh, 5vw), 38px); font-weight: bold; color: #333; }
+  .category-card .count { font-size: clamp(13px, min(2.6vh, 3vw), 22px); color: #999; }
 
   /* 카테고리 안의 단계 목록 */
   .stage-list-screen {
@@ -421,12 +421,13 @@
     gap: clamp(8px, 1.6vh, 16px); width: min(92vw, 460px); margin: 0 auto;
   }
   .stage-btn {
-    flex: 1; min-height: 0; background: white; border-radius: 20px; padding: 8px 24px;
+    flex: 1; min-height: 0; background: white; border-radius: 20px; padding: 8px 28px;
     box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-    text-align: left; font-size: clamp(14px, 3.4vh, 24px); font-weight: bold; color: #333;
+    text-align: left; font-size: clamp(16px, 4.2vh, 34px); font-weight: bold; color: #333;
     border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
   }
-  .stage-btn .badge { font-size: clamp(11px, 1.8vh, 15px); color: #999; font-weight: normal; }
+  .stage-btn .badge { font-size: clamp(12px, 2.2vh, 19px); color: #999; font-weight: normal; flex-shrink: 0; white-space: nowrap; margin-left: 12px; }
+  .stage-btn > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .back-btn {
     background: #f0f0f0; color: #666; font-size: clamp(12px, 2vh, 18px); padding: clamp(6px, 1.4vh, 10px) clamp(10px, 3vw, 20px);
     border-radius: 16px; box-shadow: none; min-width: auto;
@@ -693,7 +694,7 @@ const STAGES = [
     items: KOREAN_WORD_ITEMS
   },
   {
-    id: 'words-picture', lang: 'ko-KR', label: '단어 (그림보고 쓰기)', group: 'ko', type: 'trace', pictureWriting: true,
+    id: 'words-picture', lang: 'ko-KR', label: '그림 보고 쓰기', group: 'ko', type: 'trace', pictureWriting: true,
     items: KOREAN_WORD_ITEMS
   },
   {
@@ -1196,28 +1197,37 @@ function pickRoundItems(stage) {
   return shuffled.slice(0, ROUND_SIZE);
 }
 
+// 화면 전환 지점(단계 목록에서 들어올 때)마다 매번 모든 화면을 개별적으로
+// 안 끄면, 예전 화면이 그대로 뒤에 남아있다가 나중에 다시 보이는 문제가
+// 생길 수 있어서 한 곳에서 전부 끄고 시작함
+function hideAllScreens() {
+  stageMenu.style.display = 'none';
+  learnScreen.style.display = 'none';
+  matchScreen.style.display = 'none';
+  memoryScreen.style.display = 'none';
+  syllableScreen.style.display = 'none';
+  combineScreen.style.display = 'none';
+}
+
 function startStage(stage) {
+  hideAllScreens();
   if (stage.type === 'match') {
     currentStage = stage;
-    stageMenu.style.display = 'none';
     startMatchRound();
     return;
   }
   if (stage.type === 'memory') {
     currentStage = stage;
-    stageMenu.style.display = 'none';
     startMemoryRound();
     return;
   }
   if (stage.type === 'syllable') {
     currentStage = stage;
-    stageMenu.style.display = 'none';
     startSyllableRound();
     return;
   }
   if (stage.type === 'combine') {
     currentStage = stage;
-    stageMenu.style.display = 'none';
     startCombineRound();
     return;
   }
@@ -1240,14 +1250,22 @@ function startStage(stage) {
   btnSubmit.style.display = isTrace ? 'inline-block' : 'none';
   btnReadDone.style.display = isTrace ? 'none' : 'inline-block';
   if (!isTrace) {
-    // 문장(읽기) 단계는 따라쓰기 박스가 없어서 카드 크기를 CSS 기본값으로 되돌림
-    document.querySelector('.card').style.width = '';
+    // 문장(읽기) 단계는 따라쓰기 박스가 없어서 카드 하나만 화면에 뜸 - 최대한
+    // 넓게 잡아서 큰 글씨로 보여줄 공간을 확보하고, 위/아래로 남는 공간에는
+    // 카드를 가운데로 오게 해서(margin:auto) 진행바 바로 밑에 붙어 보이지
+    // 않고 화면 전체를 자연스럽게 쓰는 것처럼 보이게 함
+    document.querySelector('.card').style.width = stage.type === 'read' ? 'min(92vw, 860px)' : '';
     document.querySelector('.card').style.height = '';
     charDisplay.style.fontSize = '';
     practiceRow.style.flexDirection = '';
+    // .card 자체가 아니라 그걸 감싼 practice-row에 margin:auto를 줘야
+    // learnScreen(진짜 여백을 쥐고 있는 flex 컨테이너)의 남는 세로 공간을
+    // 실제로 차지해서 가운데로 올 수 있음
+    practiceRow.style.margin = 'auto 0';
+  } else {
+    practiceRow.style.margin = ''; // 따라쓰기 단계로 돌아오면 읽기 단계에서 준 margin을 반드시 되돌림
   }
 
-  stageMenu.style.display = 'none';
   learnScreen.style.display = 'flex';
   renderStickerBoard();
   renderGrowthBadge();
@@ -2126,13 +2144,15 @@ function sizeTraceBox() {
   const availWidthTotal = learnScreen.clientWidth - sidePadding;
 
   // 두 가지 배치를 모두 계산함. 세로 배치는 항상 세로 공간을 거의 다 채우기 때문에
-  // 기본으로 삼고, 가로로 나란히 뒀을 때가 "뚜렷하게" 더 크게 나올 때만(폭이 넉넉한
-  // 화면) 가로 배치로 바꿈 - 그냥 더 큰 쪽만 고르면 가로 배치가 살짝만 더 커도
-  // 세로 여백이 잔뜩 남는 경우가 생겨서(폭에 막혀 높이를 다 못 씀) 이렇게 처리함
+  // 기본으로 삼음. 가로 배치는 폭에 막혀서 세로 공간이 남아도는 경우가 많은데,
+  // 가로 배치의 박스가 살짝만 더 크면(예전엔 15%) 남는 세로 여백이 화면 아래쪽에
+  // 크게 뚫려 보이는 문제가 있었음 -> 가로 배치를 썼을 때 안 쓰고 남는 세로 여백이
+  // 작을 때만(=화면이 실제로 가로로 넉넉할 때만) 가로 배치로 바꿈
   const sizeSideBySide = Math.min(availH, (availWidthTotal - gap) / 2);
   const sizeStacked = Math.min((availH - gap) / 2, availWidthTotal);
-  const useSideBySide = sizeSideBySide > sizeStacked * 1.15;
-  const size = Math.max(160, Math.min((useSideBySide ? sizeSideBySide : sizeStacked) - 16, 720));
+  const sideBySideWaste = availH - sizeSideBySide;
+  const useSideBySide = sizeSideBySide > sizeStacked && sideBySideWaste < availH * 0.15;
+  const size = Math.max(160, Math.min((useSideBySide ? sizeSideBySide : sizeStacked) - 16, 900));
   // 계산에 쓴 배치를 그대로 강제함 (flex-wrap에 맡기면 계산한 크기가 두 배치
   // 중 하나에 우연히 걸쳐 들어맞아서 의도한 배치와 다르게 나올 수 있음)
   practiceRow.style.flexDirection = useSideBySide ? 'row' : 'column';
@@ -2170,7 +2190,15 @@ function renderItem() {
   const guideChar = isBlankFill ? item.blankChar : item.char;
   const hintRevealed = isBlankFill && blankWrongAttempts >= BLANK_HINT_THRESHOLD;
   charDisplay.textContent = text;
-  charDisplay.style.fontSize = currentStage.type === 'read' ? '38px' : fitFontSizeFor(text, currentBoxSize * 0.62) + 'px';
+  if (currentStage.type === 'read') {
+    // 문장 읽기는 따라쓰기 박스가 없어서 카드 하나가 화면 대부분을 쓸 수 있는데,
+    // 예전엔 화면 크기와 무관하게 38px로 고정돼 있어서 큰 화면에서 텍스트만
+    // 작게 뜨고 나머지 공간이 텅 비어 보였음 -> 화면 폭에 맞춰 크게 키움
+    const readCardWidth = Math.min(window.innerWidth * 0.92, 860);
+    charDisplay.style.fontSize = Math.min(72, fitFontSizeFor(text, readCardWidth * 0.86)) + 'px';
+  } else {
+    charDisplay.style.fontSize = fitFontSizeFor(text, currentBoxSize * 0.62) + 'px';
+  }
   charDisplay.classList.toggle('hidden', !!currentStage.pictureWriting);
   itemEmoji.style.fontSize = Math.round(currentBoxSize * 0.46) + 'px';
 
