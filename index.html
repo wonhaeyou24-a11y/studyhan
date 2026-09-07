@@ -421,6 +421,25 @@
     background: #eee; color: #666; box-shadow: none; margin-top: 8px;
     font-size: clamp(13px, 2vh, 16px); padding: 8px 20px; min-width: auto;
   }
+  .backup-divider { width: 100%; border: none; border-top: 1px solid #eee; margin: 18px 0 14px; }
+  .btn-backup-reset {
+    background: #fff0f0; color: #c0392b; box-shadow: none; width: 100%;
+    font-size: clamp(13px, 2vh, 16px); padding: 10px 20px;
+  }
+  .backup-reset-confirm { width: 100%; }
+  .backup-confirm-row { display: flex; flex-direction: row; gap: 10px; width: 100%; }
+  .backup-reset-warning {
+    color: #c0392b; font-size: clamp(12px, 1.8vh, 15px); line-height: 1.5;
+    background: #fff0f0; border-radius: 14px; padding: 12px 16px; margin: 12px 0;
+  }
+  .btn-backup-cancel {
+    background: #eee; color: #666; box-shadow: none;
+    font-size: clamp(13px, 2vh, 16px); padding: 10px 16px; flex: 1; min-width: 0;
+  }
+  .btn-backup-danger {
+    background: #ef476f; color: white; box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+    font-size: clamp(13px, 2vh, 16px); padding: 10px 16px; flex: 1; min-width: 0;
+  }
 
   .report-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.45);
@@ -599,6 +618,17 @@
     </div>
     <p class="backup-status" id="backupStatus"></p>
     <input type="file" id="backupFileInput" accept="application/json" style="display:none;">
+
+    <hr class="backup-divider">
+    <button class="btn-backup-reset" id="btnBackupResetOpen">🔄 처음부터 하기</button>
+    <div class="backup-reset-confirm" id="backupResetConfirm" style="display:none;">
+      <p class="backup-reset-warning">정말 모든 진도를 지울까요?<br>스티커·레벨·학습 기록이 전부 사라지고 되돌릴 수 없어요.</p>
+      <div class="backup-confirm-row">
+        <button class="btn-backup-cancel" id="btnBackupResetCancel">취소</button>
+        <button class="btn-backup-danger" id="btnBackupResetConfirm">네, 처음부터 할게요</button>
+      </div>
+    </div>
+
     <button class="btn-backup-close" id="btnBackupClose">닫기</button>
   </div>
 </div>
@@ -2084,12 +2114,25 @@ function importBackupFromFile(file) {
   reader.readAsText(file);
 }
 
+// 테스트 삼아 눌러본 기록이 진도로 남아서, 실제로 쓰기 전에 완전히
+// 초기화하고 싶을 때를 위한 기능. 되돌릴 수 없는 동작이라 한 번 더
+// 확인을 받고, 이어하기 체크포인트까지 포함해서 진도 관련 키를 전부 지움
+const RESET_KEYS = [...BACKUP_KEYS, TRACE_CHECKPOINT_KEY];
+function resetAllProgress() {
+  RESET_KEYS.forEach((key) => { try { localStorage.removeItem(key); } catch (e) {} });
+  location.reload(); // 메모리 상의 모든 상태(currentLevel, correctCount 등)까지 깨끗하게 다시 시작
+}
+
 const backupOverlay = document.getElementById('backupOverlay');
 const backupStatus = document.getElementById('backupStatus');
 const backupFileInput = document.getElementById('backupFileInput');
+const btnBackupResetOpen = document.getElementById('btnBackupResetOpen');
+const backupResetConfirm = document.getElementById('backupResetConfirm');
 document.getElementById('btnBackupOpen').addEventListener('click', () => {
   backupStatus.textContent = '';
   backupStatus.className = 'backup-status';
+  backupResetConfirm.style.display = 'none';
+  btnBackupResetOpen.style.display = 'block';
   backupOverlay.classList.add('show');
 });
 document.getElementById('btnBackupClose').addEventListener('click', () => {
@@ -2102,6 +2145,15 @@ backupFileInput.addEventListener('change', (e) => {
   if (file) importBackupFromFile(file);
   backupFileInput.value = '';
 });
+btnBackupResetOpen.addEventListener('click', () => {
+  backupResetConfirm.style.display = 'block';
+  btnBackupResetOpen.style.display = 'none';
+});
+document.getElementById('btnBackupResetCancel').addEventListener('click', () => {
+  backupResetConfirm.style.display = 'none';
+  btnBackupResetOpen.style.display = 'block';
+});
+document.getElementById('btnBackupResetConfirm').addEventListener('click', resetAllProgress);
 
 function renderStickerBoard() {
   stickerBoard.innerHTML = '';
