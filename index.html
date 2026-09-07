@@ -498,6 +498,33 @@
   }
   .stage-btn .badge { font-size: clamp(12px, 2.2vh, 19px); color: #999; font-weight: normal; flex-shrink: 0; white-space: nowrap; margin-left: 12px; }
   .stage-btn > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+  /* 미니게임 목록: 한국어/영어/일본어 카테고리별로 세로로 묶어서 정리 */
+  .game-sections {
+    flex: 1; min-height: 0; overflow-y: auto; align-items: start;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: clamp(12px, 2vw, 28px); width: min(94vw, 1300px); margin: 0 auto;
+  }
+  .game-lang-section {
+    display: flex; flex-direction: column; gap: clamp(10px, 1.6vh, 16px);
+    background: rgba(255,255,255,0.55); border-radius: 24px; padding: clamp(12px, 1.8vh, 20px);
+  }
+  .game-lang-header {
+    display: flex; align-items: center; gap: 10px; font-weight: 900; color: #444;
+    font-size: clamp(17px, 2.6vh, 24px); padding: 0 4px;
+  }
+  .game-lang-emoji {
+    width: clamp(32px, 4.6vh, 44px); height: clamp(32px, 4.6vh, 44px); border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; color: white; font-weight: 900;
+    background: linear-gradient(135deg, #06d6a0, #118ab2); font-size: clamp(15px, 2.2vh, 19px);
+  }
+  .game-lang-section:nth-of-type(2) .game-lang-emoji { background: linear-gradient(135deg, #ff9f1c, #ef476f); }
+  .game-lang-section:nth-of-type(3) .game-lang-emoji { background: linear-gradient(135deg, #a06cd5, #5e60ce); }
+  .game-stage-btn {
+    flex: 0 0 auto; min-height: 60px; padding: 8px 20px;
+    font-size: clamp(13px, 2.4vh, 19px); /* 언어별로 나눠서 칸이 좁아지므로 기본 stage-btn보다 작게 */
+  }
+  .game-stage-btn .badge { font-size: clamp(11px, 1.7vh, 15px); margin-left: 8px; }
   .back-btn {
     background: #f0f0f0; color: #666; font-size: clamp(12px, 2vh, 18px); padding: clamp(6px, 1.4vh, 10px) clamp(10px, 3vw, 20px);
     border-radius: 16px; box-shadow: none; min-width: auto;
@@ -926,7 +953,7 @@ STAGES.push(
 // 자음+모음 조합 만들기: 완성된 글자를 보여주고 외우게 하는 대신, 자음과
 // 모음을 하나씩 직접 눌러서 합쳐보며 "조합 원리"를 체험하게 함
 STAGES.push(
-  { id: 'combine-ko', label: '자음+모음 조합 만들기', group: 'game', type: 'combine', lang: 'ko-KR', items: [] },
+  { id: 'combine-ko', label: '자음+모음 조합', group: 'game', type: 'combine', lang: 'ko-KR', items: [] },
 );
 
 let currentStage = null;
@@ -1129,14 +1156,51 @@ function renderCategoryScreen() {
   });
 }
 
+// 미니게임 목록을 한국어/영어/일본어로 묶어서 보여줄 때 쓰는 카테고리 정의.
+// 각 미니게임 stage에 이미 있는 lang 필드(ko-KR/en-US/ja-JP) 기준으로 묶음
+const GAME_LANG_SECTIONS = [
+  { lang: 'ko-KR', emoji: '가', title: '한국어' },
+  { lang: 'en-US', emoji: 'A', title: '영어' },
+  { lang: 'ja-JP', emoji: 'あ', title: '일본어' },
+];
+// 언어별로 묶어서 보여줄 땐 각 게임 이름 끝의 "(한국어)/(영어)/(일본어)"가
+// 헤더와 중복되니 표시할 때만 떼어냄(원래 label 자체는 리포트 등에서 그대로 씀)
+function stripGameLangSuffix(label) {
+  return label.replace(/\s*\((한국어|영어|일본어)\)\s*$/, '');
+}
+
 function renderStageListScreen(groupId) {
   const group = GROUPS.find((g) => g.id === groupId);
   menuTitle.textContent = `${group.emoji} ${group.title}`;
   btnMenuBack.classList.add('show');
   streakBadge.style.display = 'none';
   heroSection.style.display = 'none';
-  stageList.className = 'stage-list-screen';
   stageList.innerHTML = '';
+
+  if (groupId === 'game') {
+    stageList.className = 'game-sections';
+    GAME_LANG_SECTIONS.forEach((sec) => {
+      const stagesForLang = STAGES.filter((s) => s.group === 'game' && s.lang === sec.lang);
+      if (stagesForLang.length === 0) return;
+      const section = document.createElement('div');
+      section.className = 'game-lang-section';
+      const header = document.createElement('div');
+      header.className = 'game-lang-header';
+      header.innerHTML = `<span class="game-lang-emoji">${sec.emoji}</span><span>${sec.title}</span>`;
+      section.appendChild(header);
+      stagesForLang.forEach((stage) => {
+        const btn = document.createElement('button');
+        btn.className = 'stage-btn game-stage-btn';
+        btn.innerHTML = `<span>${stripGameLangSuffix(stage.label)}</span><span class="badge">${stageBadgeText(stage)}</span>`;
+        btn.addEventListener('click', () => startStage(stage));
+        section.appendChild(btn);
+      });
+      stageList.appendChild(section);
+    });
+    return;
+  }
+
+  stageList.className = 'stage-list-screen';
   STAGES.filter((s) => s.group === groupId).forEach((stage) => {
     const btn = document.createElement('button');
     btn.className = 'stage-btn';
