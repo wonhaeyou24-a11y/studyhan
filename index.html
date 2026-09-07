@@ -585,6 +585,18 @@ const STAGES = [
     items: ['가','나','다','라','마','바','사','아','자','차','카','타','파','하'].map(c => ({ char: c, accepts: [c] }))
   },
   {
+    // 받침: 가나다 다음, 여러 음절 단어로 넘어가기 전에 꼭 필요한 단계인데
+    // 빠져 있었음. 추상적인 "가+ㄱ=각" 대신 아이가 실제로 아는 쉬운 한 글자
+    // 단어로 구성해서 받침의 의미를 바로 체감하게 함
+    id: 'batchim', lang: 'ko-KR', label: '받침', group: 'ko', type: 'trace',
+    items: [
+      { char: '밥', emoji: '🍚' }, { char: '손', emoji: '✋' }, { char: '물', emoji: '💧' }, { char: '집', emoji: '🏠' },
+      { char: '눈', emoji: '❄️' }, { char: '달', emoji: '🌙' }, { char: '별', emoji: '⭐' }, { char: '발', emoji: '🦶' },
+      { char: '밤', emoji: '🌰' }, { char: '곰', emoji: '🐻' }, { char: '산', emoji: '⛰️' }, { char: '공', emoji: '🏀' },
+      { char: '책', emoji: '📖' }, { char: '옷', emoji: '👕' },
+    ].map(o => ({ ...o, accepts: [o.char] }))
+  },
+  {
     id: 'words', lang: 'ko-KR', label: '단어', group: 'ko', type: 'trace', hintMode: true,
     items: KOREAN_WORD_ITEMS
   },
@@ -976,7 +988,7 @@ introScreen.addEventListener('click', () => {
 // 자음/모음/가나다/알파벳/히라가나처럼 항목이 적은 "기초" 단계는 처음부터 끝까지
 // 순서대로 한 바퀴 다 연습하고, 다 끝나면(goToNextItem의 복습 로직이) 오답만
 // 모아서 복습함 - 무작위로 일부만 뽑지 않고 전체를 순서대로 익히는 게 목적
-const SEQUENTIAL_FULL_STAGES = ['consonants', 'vowels', 'ganada', 'en-upper', 'en-lower', 'ja-hiragana'];
+const SEQUENTIAL_FULL_STAGES = ['consonants', 'vowels', 'ganada', 'batchim', 'en-upper', 'en-lower', 'ja-hiragana'];
 
 // 단어처럼 항목이 아주 많은 단계는 하루 최대 DAILY_CHUNK_SIZE개만 순서대로 연습하고
 // 다음날 그 다음 묶음으로 넘어감(다 돌면 처음부터 다시). 같은 날 다시 들어오면
