@@ -139,11 +139,13 @@
   .match-card {
     background: white; border: 3px solid transparent; border-radius: 20px;
     font-weight: bold; color: #333; padding: clamp(6px, 1.4vh, 14px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 5px 0 rgba(0,0,0,0.07), 0 7px 14px rgba(0,0,0,0.08);
+    transition: transform 0.08s, box-shadow 0.08s;
     flex: 1; min-width: 0; min-height: 0;
     display: flex; align-items: center; justify-content: center;
     text-align: center; word-break: keep-all;
   }
+  .match-card:active { transform: translateY(4px) scale(0.97); box-shadow: 0 1px 0 rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.06); }
   .match-card.emoji-card { font-size: clamp(36px, min(10vh, 11vw), 100px); }
   .match-card.word-card { font-size: clamp(18px, min(4.4vh, 4.6vw), 42px); }
   .match-card.selected { border-color: #118ab2; }
@@ -166,7 +168,13 @@
     background: linear-gradient(160deg, #118ab2, #073b4c); color: white;
     display: flex; align-items: center; justify-content: center;
     font-weight: bold; padding: 4px; text-align: center; word-break: keep-all;
-    min-width: 0; min-height: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    min-width: 0; min-height: 0;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.15), 0 7px 14px rgba(0,0,0,0.15);
+    transition: transform 0.08s, box-shadow 0.08s;
+  }
+  .memory-card:not(.flipped):not(.matched):active {
+    transform: scale(0.94);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.15), 0 3px 8px rgba(0,0,0,0.12);
   }
   .memory-card .memory-face-back { font-size: clamp(28px, min(7vh, 8vw), 56px); }
   .memory-card.flipped { background: white; color: #333; border-color: #118ab2; cursor: default; }
@@ -202,6 +210,7 @@
     font-size: clamp(28px, min(8vh, 9vw), 84px); font-weight: 900; position: relative;
     box-shadow: 0 5px 0 rgba(0,0,0,0.15); min-width: auto; padding: 0;
   }
+  .syllable-tile:active { transform: translateY(3px) scale(0.95); }
   .syllable-tile.used { visibility: hidden; }
   .syllable-tile .tile-hint-num {
     position: absolute; top: 4px; right: 10px; font-size: clamp(13px, 2vh, 18px); color: #e08a00; font-weight: 900;
@@ -230,6 +239,7 @@
     min-width: auto; padding: 0;
   }
   .combine-tile.selected { background: #118ab2; color: white; }
+  .combine-tile:active { transform: translateY(2px) scale(0.94); }
   button {
     font-size: clamp(15px, 2.8vh, 32px);
     font-weight: bold;
@@ -395,13 +405,20 @@
 
   /* 카테고리 선택 (한글/영어/일어학습) */
   .category-grid {
-    flex: 1; min-height: 0; display: flex; gap: 16px;
-    width: min(94vw, 720px); margin: 0 auto;
+    flex: 1; min-height: 0; display: flex; gap: clamp(16px, 2vw, 32px);
+    width: min(94vw, 1300px); margin: 0 auto;
   }
   .category-card {
     flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: clamp(14px, 3.2vh, 36px); background: white; border-radius: 28px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: none; cursor: pointer; padding: 12px;
+    box-shadow: 0 10px 0 rgba(0,0,0,0.06), 0 14px 26px rgba(0,0,0,0.12);
+    border: none; cursor: pointer; padding: 12px;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+  }
+  .category-card:active {
+    transform: translateY(8px) scale(0.97);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.06), 0 4px 10px rgba(0,0,0,0.1);
+    background: #fffaf0;
   }
   .category-card .emoji {
     font-size: clamp(32px, min(11vh, 12vw), 84px); font-weight: 900; color: white;
@@ -417,14 +434,21 @@
 
   /* 카테고리 안의 단계 목록 */
   .stage-list-screen {
-    flex: 1; min-height: 0; display: flex; flex-direction: column;
-    gap: clamp(8px, 1.6vh, 16px); width: min(92vw, 460px); margin: 0 auto;
+    flex: 1; min-height: 0; display: grid; grid-auto-rows: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+    gap: clamp(8px, 1.6vh, 18px); width: min(92vw, 1200px); margin: 0 auto;
   }
   .stage-btn {
     flex: 1; min-height: 0; background: white; border-radius: 20px; padding: 8px 28px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    box-shadow: 0 6px 0 rgba(0,0,0,0.06), 0 8px 18px rgba(0,0,0,0.08);
     text-align: left; font-size: clamp(16px, 4.2vh, 34px); font-weight: bold; color: #333;
     border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    transition: transform 0.08s, box-shadow 0.08s, background 0.08s;
+  }
+  .stage-btn:active {
+    transform: translateY(5px) scale(0.99);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.06);
+    background: #fff7e0;
   }
   .stage-btn .badge { font-size: clamp(12px, 2.2vh, 19px); color: #999; font-weight: normal; flex-shrink: 0; white-space: nowrap; margin-left: 12px; }
   .stage-btn > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
