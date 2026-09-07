@@ -97,6 +97,7 @@
   }
   .sticker-slot {
     width: clamp(26px, 5vh, 44px); height: clamp(26px, 5vh, 44px); border-radius: 50%;
+    flex-shrink: 0; /* 없으면 칸이 많을 때(자음 14개 등) 가로 폭만 눌려서 타원이 됨 - 대신 옆으로 스크롤되게 함 */
     border: 2px dashed #dcdcdc;
     display: flex; align-items: center; justify-content: center;
     overflow: hidden; background: #fafafa;
