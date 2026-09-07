@@ -679,6 +679,16 @@ const STAGES = [
     ].map(o => ({ ...o, accepts: [o.char] }))
   },
   {
+    // 쌍자음/복잡한 모음은 기본 자음·모음·받침을 충분히 익힌 다음 단계라 여기
+    // 순서에 넣음 (아직 숙달도 기반 잠금은 없고, 목록에 있는 순서만 반영)
+    id: 'double-consonants', lang: 'ko-KR', label: '쌍자음', group: 'ko', type: 'trace',
+    items: ['ㄲ','ㄸ','ㅃ','ㅆ','ㅉ'].map(c => ({ char: c, accepts: [c] }))
+  },
+  {
+    id: 'complex-vowels', lang: 'ko-KR', label: '복잡한 모음', group: 'ko', type: 'trace',
+    items: ['ㅐ','ㅔ','ㅚ','ㅟ','ㅢ','ㅘ','ㅝ'].map(c => ({ char: c, accepts: [c] }))
+  },
+  {
     id: 'words', lang: 'ko-KR', label: '단어', group: 'ko', type: 'trace', hintMode: true,
     items: KOREAN_WORD_ITEMS
   },
@@ -1109,7 +1119,7 @@ introScreen.addEventListener('click', () => {
 // 자음/모음/가나다/알파벳/히라가나처럼 항목이 적은 "기초" 단계는 처음부터 끝까지
 // 순서대로 한 바퀴 다 연습하고, 다 끝나면(goToNextItem의 복습 로직이) 오답만
 // 모아서 복습함 - 무작위로 일부만 뽑지 않고 전체를 순서대로 익히는 게 목적
-const SEQUENTIAL_FULL_STAGES = ['consonants', 'vowels', 'ganada', 'batchim', 'en-upper', 'en-lower', 'ja-hiragana'];
+const SEQUENTIAL_FULL_STAGES = ['consonants', 'vowels', 'ganada', 'batchim', 'double-consonants', 'complex-vowels', 'en-upper', 'en-lower', 'ja-hiragana'];
 
 // 단어처럼 항목이 아주 많은 단계는 하루 최대 DAILY_CHUNK_SIZE개만 순서대로 연습하고
 // 다음날 그 다음 묶음으로 넘어감(다 돌면 처음부터 다시). 같은 날 다시 들어오면

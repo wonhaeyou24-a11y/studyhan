@@ -1,7 +1,7 @@
 // 오프라인 지원용 서비스워커.
 // index.html을 고칠 때마다 CACHE_VERSION을 반드시 올려야 함 - 안 그러면
 // 오프라인 상태의 기기에서는 예전 버전 코드가 계속 실행됨.
-const CACHE_VERSION = 'v12';
+const CACHE_VERSION = 'v13';
 const CACHE_NAME = 'studyhan-' + CACHE_VERSION;
 const ASSETS = [
   './',
